@@ -54,9 +54,10 @@ contract CryptoBnB is Ownable {
     ) external {      
         fundings[id] = Funding({
             id: id,
-            user: msg.sender,
             tokenAddress: tokenAddress,
-            tokenAmount: tokenAmount
+            tokenAmount: tokenAmount,
+            user: msg.sender,
+            refunded: false
         });
         SafeTransferLib.safeTransferFrom(tokenAddress, msg.sender, address(this), tokenAmount);
         emit Funded(id, fiatAmount, currencyCode);
@@ -74,6 +75,6 @@ contract CryptoBnB is Ownable {
     /// @notice Withdraw accumulated tokens (owner only)
     /// @param tokenAddress Token address to withdraw
     function withdrawTokens(address tokenAddress) external onlyOwner {
-        SafeTransferLib.safeTransferAllFrom(tokenAddress, address(this), owner());
+        SafeTransferLib.safeTransferAll(tokenAddress, owner());
     }
 }
