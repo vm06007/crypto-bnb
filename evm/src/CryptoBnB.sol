@@ -10,8 +10,8 @@ contract CryptoBnB is Ownable {
     /// @notice Struct to store card funding information
     struct Funding {
         uint256 id;                  // Unique card identifier
-        address tokenAddress;        // ERC20 token used for payment
-        uint256 tokenAmount;         // Amount paid in crypto tokens
+        address tokenAddress;        // ERC20 token used for payment, address(0) for native token
+        uint256 tokenAmount;              // Amount paid in tokens or native currency
         address user;                // User who funded the card
         bool refunded;               // Whether the funding has been refunded
     }
@@ -32,6 +32,8 @@ contract CryptoBnB is Ownable {
         uint256 indexed amount,
         address indexed tokenAddress
     );
+    
+    error InvalidAmount();
 
     /// @notice Constructor to set initial supported tokens
     constructor() {
@@ -41,7 +43,7 @@ contract CryptoBnB is Ownable {
 
     /// @notice Fund a virtual card with crypto payment
     /// @param id Unique identifier
-    /// @param tokenAddress ERC20 token address to pay with
+    /// @param tokenAddress ERC20 token address to pay with, address(0) for native token
     /// @param tokenAmount Amount of tokens to pay
     /// @param currencyCode Reference fiat currency for the card
     /// @param fiatAmount Reference fiat amount in cents
@@ -51,7 +53,7 @@ contract CryptoBnB is Ownable {
         uint256 tokenAmount,
         string calldata currencyCode,
         uint256 fiatAmount
-    ) external {      
+    ) external payable {      
         fundings[id] = Funding({
             id: id,
             tokenAddress: tokenAddress,
@@ -59,7 +61,13 @@ contract CryptoBnB is Ownable {
             user: msg.sender,
             refunded: false
         });
-        SafeTransferLib.safeTransferFrom(tokenAddress, msg.sender, address(this), tokenAmount);
+        if (tokenAddress != address(0)) {
+            SafeTransferLib.safeTransferFrom(tokenAddress, msg.sender, address(this), tokenAmount);
+        } else {
+            if (msg.value != tokenAmount) {
+                revert InvalidAmount();
+            }
+        }
         emit Funded(id, fiatAmount, currencyCode);
     }
 
@@ -68,7 +76,11 @@ contract CryptoBnB is Ownable {
     function refund(uint256 id) external onlyOwner {
         fundings[id].refunded = true;
         Funding memory funding = fundings[id];
-        SafeTransferLib.safeTransfer(funding.tokenAddress, funding.user, funding.tokenAmount);
+        if (funding.tokenAddress != address(0)) {
+            SafeTransferLib.safeTransfer(funding.tokenAddress, funding.user, funding.tokenAmount);
+        } else {
+            SafeTransferLib.safeTransferETH(funding.user, funding.tokenAmount);
+        }
         emit Refunded(id, funding.tokenAmount, funding.tokenAddress);
     }
 
@@ -76,5 +88,10 @@ contract CryptoBnB is Ownable {
     /// @param tokenAddress Token address to withdraw
     function withdrawTokens(address tokenAddress) external onlyOwner {
         SafeTransferLib.safeTransferAll(tokenAddress, owner());
+    }
+
+    /// @notice Withdraw accumulated native currency (owner only)
+    function withdrawNative() external onlyOwner {
+        SafeTransferLib.safeTransferAllETH(owner());
     }
 }
