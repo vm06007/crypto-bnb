@@ -1,0 +1,19 @@
+{
+  "name": "evm-template",
+  "version": "1.0.0",
+  "description": "smart contracts template",
+  "private": true,
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.1.0",
+    "@uniswap/v4-core": "latest",
+    "@uniswap/v4-periphery": "latest"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "install-forge": "forge install",
+    "deploy:counter:mainnet": "forge script script/DeployCounter.s.sol:DeployCounter --broadcast --legacy --verify --rpc-url mainnet",
+    "deploy:counter:local": "forge script script/DeployCounter.s.sol:DeployCounter --broadcast --rpc-url http://localhost:8545"
+  }
+}
