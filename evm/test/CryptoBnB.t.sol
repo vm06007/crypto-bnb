@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
 import {Test} from "forge-std/Test.sol";
@@ -6,6 +7,7 @@ import {CryptoBnB} from "../src/CryptoBnB.sol";
 import {MockERC20} from "./mocks/MockERC20.sol";
 
 contract CryptoBnBTest is Test {
+
     CryptoBnB public cryptoBnB;
     MockERC20 public token;
     address public owner;

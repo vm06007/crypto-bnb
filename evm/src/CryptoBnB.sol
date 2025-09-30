@@ -6,6 +6,7 @@ import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 /// @title CryptoBnB
 /// @notice Allows users to fund virtual cards with crypto
+
 contract CryptoBnB is Ownable {
     /// @notice Struct to store card funding information
     struct Funding {
@@ -32,7 +33,7 @@ contract CryptoBnB is Ownable {
         uint256 indexed amount,
         address indexed tokenAddress
     );
-    
+
     error InvalidAmount();
 
     /// @notice Constructor to set initial supported tokens
@@ -53,7 +54,7 @@ contract CryptoBnB is Ownable {
         uint256 tokenAmount,
         string calldata currencyCode,
         uint256 fiatAmount
-    ) external payable {      
+    ) external payable {
         fundings[id] = Funding({
             id: id,
             tokenAddress: tokenAddress,
@@ -68,30 +69,65 @@ contract CryptoBnB is Ownable {
                 revert InvalidAmount();
             }
         }
-        emit Funded(id, fiatAmount, currencyCode);
+        emit Funded(
+            id,
+            fiatAmount,
+            currencyCode
+        );
     }
 
     /// @notice Refund a user (owner only)
-    /// @param id Unique identifier
-    function refund(uint256 id) external onlyOwner {
-        fundings[id].refunded = true;
-        Funding memory funding = fundings[id];
-        if (funding.tokenAddress != address(0)) {
-            SafeTransferLib.safeTransfer(funding.tokenAddress, funding.user, funding.tokenAmount);
+    /// @param _id Unique identifier
+    function refund(
+        uint256 _id
+    )
+        external
+        onlyOwner
+    {
+        fundings[_id].refunded = true;
+        Funding memory funding = fundings[_id];
+
+        if (funding.tokenAddress != address(0x0)) {
+            SafeTransferLib.safeTransfer(
+                funding.tokenAddress,
+                funding.user,
+                funding.tokenAmount
+            );
         } else {
-            SafeTransferLib.safeTransferETH(funding.user, funding.tokenAmount);
+            SafeTransferLib.safeTransferETH(
+                funding.user,
+                funding.tokenAmount
+            );
         }
-        emit Refunded(id, funding.tokenAmount, funding.tokenAddress);
+
+        emit Refunded(
+            _id,
+            funding.tokenAmount,
+            funding.tokenAddress
+        );
     }
 
     /// @notice Withdraw accumulated tokens (owner only)
-    /// @param tokenAddress Token address to withdraw
-    function withdrawTokens(address tokenAddress) external onlyOwner {
-        SafeTransferLib.safeTransferAll(tokenAddress, owner());
+    /// @param _tokenAddress Token address to withdraw
+    function withdrawTokens(
+        address _tokenAddress
+    )
+        external
+        onlyOwner
+    {
+        SafeTransferLib.safeTransferAll(
+            _tokenAddress,
+            owner()
+        );
     }
 
     /// @notice Withdraw accumulated native currency (owner only)
-    function withdrawNative() external onlyOwner {
-        SafeTransferLib.safeTransferAllETH(owner());
+    function withdrawNative()
+        external
+        onlyOwner
+    {
+        SafeTransferLib.safeTransferAllETH(
+            owner()
+        );
     }
 }
