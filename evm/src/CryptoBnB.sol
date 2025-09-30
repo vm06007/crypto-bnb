@@ -12,7 +12,7 @@ contract CryptoBnB is Ownable {
     struct Funding {
         uint256 id;                  // Unique card identifier
         address tokenAddress;        // ERC20 token used for payment, address(0) for native token
-        uint256 tokenAmount;              // Amount paid in tokens or native currency
+        uint256 tokenAmount;         // Amount paid in tokens or native currency
         address user;                // User who funded the card
         bool refunded;               // Whether the funding has been refunded
     }
@@ -43,36 +43,44 @@ contract CryptoBnB is Ownable {
     }
 
     /// @notice Fund a virtual card with crypto payment
-    /// @param id Unique identifier
-    /// @param tokenAddress ERC20 token address to pay with, address(0) for native token
-    /// @param tokenAmount Amount of tokens to pay
-    /// @param currencyCode Reference fiat currency for the card
-    /// @param fiatAmount Reference fiat amount in cents
+    /// @param _id Unique identifier
+    /// @param _tokenAddress ERC20 token address to pay with, address(0) for native token
+    /// @param _tokenAmount Amount of tokens to pay
+    /// @param _currencyCode Reference fiat currency for the card
+    /// @param _fiatAmount Reference fiat amount in cents
     function fund(
-        uint256 id,
-        address tokenAddress,
-        uint256 tokenAmount,
-        string calldata currencyCode,
-        uint256 fiatAmount
-    ) external payable {
-        fundings[id] = Funding({
-            id: id,
-            tokenAddress: tokenAddress,
-            tokenAmount: tokenAmount,
+        uint256 _id,
+        address _tokenAddress,
+        uint256 _tokenAmount,
+        string calldata _currencyCode,
+        uint256 _fiatAmount
+    )
+        external
+        payable
+    {
+        fundings[_id] = Funding({
+            id: _id,
+            tokenAddress: _tokenAddress,
+            tokenAmount: _tokenAmount,
             user: msg.sender,
             refunded: false
         });
-        if (tokenAddress != address(0)) {
-            SafeTransferLib.safeTransferFrom(tokenAddress, msg.sender, address(this), tokenAmount);
+        if (_tokenAddress != address(0x0)) {
+            SafeTransferLib.safeTransferFrom(
+                _tokenAddress,
+                msg.sender,
+                address(this),
+                _tokenAmount
+            );
         } else {
-            if (msg.value != tokenAmount) {
+            if (msg.value != _tokenAmount) {
                 revert InvalidAmount();
             }
         }
         emit Funded(
-            id,
-            fiatAmount,
-            currencyCode
+            _id,
+            _fiatAmount,
+            _currencyCode
         );
     }
 
