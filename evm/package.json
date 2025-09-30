@@ -5,6 +5,7 @@
   "private": true,
   "dependencies": {
     "@openzeppelin/contracts": "^5.1.0",
+    "@chainlink/contracts": "^1.0.0",
     "solady": "^0.1.26"
   },
   "devDependencies": {},
