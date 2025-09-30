@@ -35,9 +35,6 @@ contract VirtualCardRequest is ReentrancyGuard, Ownable, Pausable, AccessControl
         uint256 amountBNB; // Amount in BNB (in wei)
         uint256 timestamp;
         RequestStatus status;
-        string cardType; // e.g., "VISA", "MASTERCARD"
-        string purpose; // e.g., "Travel", "Business", "Personal"
-        string metadata; // Additional request details
         address approver; // Who approved the request
         uint256 approvedAt; // When it was approved
     }
@@ -60,9 +57,7 @@ contract VirtualCardRequest is ReentrancyGuard, Ownable, Pausable, AccessControl
         uint256 indexed requestId,
         address indexed requester,
         uint256 amountSGD,
-        uint256 amountBNB,
-        string cardType,
-        string purpose
+        uint256 amountBNB
     );
 
     event VirtualCardApproved(
@@ -137,20 +132,16 @@ contract VirtualCardRequest is ReentrancyGuard, Ownable, Pausable, AccessControl
     /**
      * @dev Request a virtual card with BNB payment
      * @param amountSGD Amount in SGD (in cents)
-     * @param cardType Type of card (e.g., "VISA", "MASTERCARD")
-     * @param purpose Purpose of the card (e.g., "Travel", "Business")
-     * @param metadata Additional request details
      */
     function requestVirtualCard(
-        uint256 amountSGD,
-        string memory cardType,
-        string memory purpose,
-        string memory metadata
-    ) external payable whenNotPaused nonReentrant onlyAuthorizedRequester {
-        require(msg.value > 0, "VirtualCard: BNB payment required");
-        require(amountSGD > 0, "VirtualCard: Invalid amount");
-        require(bytes(cardType).length > 0, "VirtualCard: Card type required");
-        require(bytes(purpose).length > 0, "VirtualCard: Purpose required");
+        uint256 amountSGD
+    )
+        external
+        payable
+        whenNotPaused
+        nonReentrant
+        onlyAuthorizedRequester
+    {
 
         // Calculate required BNB amount using price feeds
         uint256 requiredBNB = calculateRequiredBNB(amountSGD);
@@ -167,9 +158,6 @@ contract VirtualCardRequest is ReentrancyGuard, Ownable, Pausable, AccessControl
             amountBNB: msg.value,
             timestamp: block.timestamp,
             status: RequestStatus.Pending,
-            cardType: cardType,
-            purpose: purpose,
-            metadata: metadata,
             approver: address(0),
             approvedAt: 0
         });
@@ -177,6 +165,12 @@ contract VirtualCardRequest is ReentrancyGuard, Ownable, Pausable, AccessControl
         userRequests[msg.sender].push(requestId);
         totalVolume += msg.value;
 
+        emit VirtualCardRequested(
+            requestId,
+            msg.sender,
+            amountSGD,
+            msg.value
+        );
     }
 
     /**
@@ -311,6 +305,63 @@ contract VirtualCardRequest is ReentrancyGuard, Ownable, Pausable, AccessControl
     }
 
     /**
+     * @dev Get current BNB price in SGD
+     * @return BNB price in SGD (with 18 decimals)
+     */
+    function getBNBPriceInSGD() external view returns (uint256) {
+        (, int256 bnbUsdPrice, , , ) = bnbUsdFeed.latestRoundData();
+        (, int256 usdSgdPrice, , , ) = usdSgdFeed.latestRoundData();
+
+        require(bnbUsdPrice > 0 && usdSgdPrice > 0, "VirtualCard: Invalid price feeds");
+
+        // BNB/SGD = BNB/USD * USD/SGD
+        return (uint256(bnbUsdPrice) * uint256(usdSgdPrice)) / 1e8;
+    }
+
+    /**
+     * @dev Get request details
+     * @param requestId The request ID
+     * @return VirtualCardRequest struct
+     */
+    function getRequest(uint256 requestId) external view validRequest(requestId) returns (CardRequest memory) {
+        return requests[requestId];
+    }
+
+    /**
+     * @dev Get user's requests
+     * @param user The user's address
+     * @return Array of request IDs
+     */
+    function getUserRequests(address user) external view returns (uint256[] memory) {
+        return userRequests[user];
+    }
+
+    /**
+     * @dev Get requests by status
+     * @param status The request status
+     * @return Array of request IDs with the specified status
+     */
+    function getRequestsByStatus(RequestStatus status) external view returns (uint256[] memory) {
+        uint256[] memory result = new uint256[](totalRequests);
+        uint256 count = 0;
+
+        for (uint256 i = 1; i <= totalRequests; i++) {
+            if (requests[i].status == status) {
+                result[count] = i;
+                count++;
+            }
+        }
+
+        // Resize array to actual count
+        uint256[] memory finalResult = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) {
+            finalResult[i] = result[i];
+        }
+
+        return finalResult;
+    }
+
+    /**
      * @dev Authorize a requester
      * @param requester The requester's address
      * @param authorized Whether to authorize or deauthorize
@@ -360,25 +411,49 @@ contract VirtualCardRequest is ReentrancyGuard, Ownable, Pausable, AccessControl
         platformFeePercentage = feePercentage;
     }
 
+    /**
+     * @dev Update price feed addresses
+     * @param _bnbUsdFeed New BNB/USD feed address
+     * @param _usdSgdFeed New USD/SGD feed address
+     */
+    function updatePriceFeeds(
+        address _bnbUsdFeed,
+        address _usdSgdFeed
+    )
+        external
+        onlyOwner
+    {
+        bnbUsdFeed = AggregatorV3Interface(_bnbUsdFeed);
+        usdSgdFeed = AggregatorV3Interface(_usdSgdFeed);
+    }
 
     /**
      * @dev Emergency pause
      */
-    function pause() external onlyOwner {
+    function pause()
+        external
+        onlyOwner
+    {
         _pause();
     }
 
     /**
      * @dev Unpause
      */
-    function unpause() external onlyOwner {
+    function unpause()
+        external
+        onlyOwner
+    {
         _unpause();
     }
 
     /**
      * @dev Withdraw platform fees (owner only)
      */
-    function withdrawFees() external onlyOwner {
+    function withdrawFees()
+        external
+        onlyOwner
+    {
         uint256 balance = address(this).balance;
         require(balance > 0, "VirtualCard: No funds to withdraw");
 
@@ -389,11 +464,21 @@ contract VirtualCardRequest is ReentrancyGuard, Ownable, Pausable, AccessControl
     /**
      * @dev Emergency withdraw (owner only, when paused)
      */
-    function emergencyWithdraw() external onlyOwner {
-        require(paused(), "VirtualCard: Must be paused");
+    function emergencyWithdraw()
+        external
+        onlyOwner
+    {
+        require(
+            paused(),
+            "VirtualCard: Must be paused"
+        );
 
         uint256 balance = address(this).balance;
-        require(balance > 0, "VirtualCard: No funds to withdraw");
+
+        require(
+            balance > 0,
+            "VirtualCard: No funds to withdraw"
+        );
 
         (bool success, ) = payable(owner()).call{value: balance}("");
         require(success, "VirtualCard: Emergency withdrawal failed");
@@ -413,15 +498,27 @@ contract VirtualCardRequest is ReentrancyGuard, Ownable, Pausable, AccessControl
      * @return totalVolume Total volume in wei
      * @return platformFeePercentage Current platform fee percentage
      */
-    function getContractStats() external view returns (uint256, uint256, uint256) {
-        return (totalRequests, totalVolume, platformFeePercentage);
+    function getContractStats()
+        external
+        view
+        returns (uint256, uint256, uint256)
+    {
+        return (
+            totalRequests,
+            totalVolume,
+            platformFeePercentage
+        );
     }
 
     /**
      * @dev Get pending requests count
      * @return Number of pending requests
      */
-    function getPendingRequestsCount() external view returns (uint256) {
+    function getPendingRequestsCount()
+        external
+        view
+        returns (uint256)
+    {
         uint256 count = 0;
         for (uint256 i = 1; i <= totalRequests; i++) {
             if (requests[i].status == RequestStatus.Pending) {
