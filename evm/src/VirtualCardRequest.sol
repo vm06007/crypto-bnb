@@ -55,6 +55,51 @@ contract VirtualCardRequest is ReentrancyGuard, Ownable, Pausable, AccessControl
     mapping(address => uint256[]) public userRequests;
     mapping(address => bool) public authorizedRequesters;
 
+    // Events
+    event VirtualCardRequested(
+        uint256 indexed requestId,
+        address indexed requester,
+        uint256 amountSGD,
+        uint256 amountBNB,
+        string cardType,
+        string purpose
+    );
+
+    event VirtualCardApproved(
+        uint256 indexed requestId,
+        address indexed approver,
+        address indexed requester
+    );
+
+    event VirtualCardRejected(
+        uint256 indexed requestId,
+        address indexed approver,
+        address indexed requester,
+        string reason
+    );
+
+    event VirtualCardCancelled(
+        uint256 indexed requestId,
+        address indexed requester
+    );
+
+    event VirtualCardCompleted(
+        uint256 indexed requestId,
+        address indexed requester
+    );
+
+    event PaymentReleased(
+        uint256 indexed requestId,
+        address indexed requester,
+        uint256 amount
+    );
+
+    event RefundIssued(
+        uint256 indexed requestId,
+        address indexed requester,
+        uint256 amount
+    );
+
     // Modifiers
     modifier onlyAuthorizedRequester() {
         require(authorizedRequesters[msg.sender], "VirtualCard: Requester not authorized");
@@ -151,6 +196,7 @@ contract VirtualCardRequest is ReentrancyGuard, Ownable, Pausable, AccessControl
         request.approver = msg.sender;
         request.approvedAt = block.timestamp;
 
+        emit VirtualCardApproved(requestId, msg.sender, request.requester);
     }
 
     /**
@@ -177,6 +223,9 @@ contract VirtualCardRequest is ReentrancyGuard, Ownable, Pausable, AccessControl
 
         (bool success, ) = payable(request.requester).call{value: refundAmount}("");
         require(success, "VirtualCard: Refund failed");
+
+        emit VirtualCardRejected(requestId, msg.sender, request.requester, reason);
+        emit RefundIssued(requestId, request.requester, refundAmount);
     }
 
     /**
@@ -202,6 +251,8 @@ contract VirtualCardRequest is ReentrancyGuard, Ownable, Pausable, AccessControl
         (bool success, ) = payable(request.requester).call{value: refundAmount}("");
         require(success, "VirtualCard: Refund failed");
 
+        emit VirtualCardCancelled(requestId, msg.sender);
+        emit RefundIssued(requestId, request.requester, refundAmount);
     }
 
     /**
@@ -232,6 +283,8 @@ contract VirtualCardRequest is ReentrancyGuard, Ownable, Pausable, AccessControl
         (bool success, ) = payable(request.requester).call{value: requesterAmount}("");
         require(success, "VirtualCard: Payment release failed");
 
+        emit VirtualCardCompleted(requestId, request.requester);
+        emit PaymentReleased(requestId, request.requester, requesterAmount);
     }
 
     /**
