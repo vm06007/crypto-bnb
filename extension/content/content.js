@@ -543,50 +543,55 @@ class PayperPlaneInjector {
     }
     async checkWalletConnection() {
         try {
-            if (!window.ethereum) {
-                console.log("[PayperPlane] No window.ethereum found for connection check");
-                return false;
+            console.log("[PayperPlane] Checking wallet connection via injected script...");
+            const result = await new Promise((resolve) => {
+                const handleResponse = (event) => {
+                    window.removeEventListener("payperplane-wallet-response", handleResponse);
+                    resolve({
+                        success: event.detail.success,
+                        account: event.detail.account
+                    });
+                };
+                window.addEventListener("payperplane-wallet-response", handleResponse);
+                window.dispatchEvent(new CustomEvent("payperplane-connect-wallet"));
+                setTimeout(() => {
+                    window.removeEventListener("payperplane-wallet-response", handleResponse);
+                    resolve({ success: false, account: null });
+                }, 5000);
+            });
+            
+            if (result.success && result.account) {
+                this.connectedAccount = result.account;
+                console.log("[PayperPlane] Connected account set:", result.account);
             }
-            console.log("[PayperPlane] Using window.ethereum directly for connection check");
-            const accounts = await window.ethereum.request({ method: "eth_accounts" });
-            const isConnected = accounts && accounts.length > 0;
-            console.log("[PayperPlane] Wallet connection status:", isConnected);
-            console.log("[PayperPlane] Connected accounts:", accounts);
-            return isConnected;
+            
+            console.log("[PayperPlane] Wallet connection status:", result.success);
+            return result.success;
         } catch (error) {
             console.log("[PayperPlane] Wallet connection check failed:", error);
             return false;
         }
     }
     async waitForEthereum(timeout = 3000) {
-        console.log("[PayperPlane] Checking for ethereum provider...");
-        console.log("[PayperPlane] window.ethereum exists:", !!window.ethereum);
-        console.log("[PayperPlane] window.ethereum type:", typeof window.ethereum);
-        console.log("[PayperPlane] window.ethereum value:", window.ethereum);
-        if (window.ethereum) {
-            console.log("[PayperPlane] Ethereum provider found immediately");
-            return window.ethereum;
-        }
-        console.log("[PayperPlane] Waiting for ethereum provider...");
-        let attempts = 0;
-        const maxAttempts = timeout / 100;
+        console.log("[PayperPlane] Checking for ethereum provider via injected script...");
         return new Promise((resolve) => {
-            const checkEthereum = () => {
-                attempts++;
-                console.log("[PayperPlane] Attempt", attempts, "- window.ethereum exists:", !!window.ethereum);
-                if (window.ethereum) {
-                    console.log("[PayperPlane] Ethereum provider found after", attempts * 100, "ms");
-                    resolve(window.ethereum);
-                    return;
+            const handleResponse = (event) => {
+                window.removeEventListener("payperplane-wallet-response", handleResponse);
+                if (event.detail.success) {
+                    console.log("[PayperPlane] Ethereum provider available via injected script");
+                    resolve(true);
+                } else {
+                    console.log("[PayperPlane] Ethereum provider not available");
+                    resolve(false);
                 }
-                if (attempts >= maxAttempts) {
-                    console.log("[PayperPlane] Timeout waiting for ethereum provider after", attempts * 100, "ms");
-                    resolve(null);
-                    return;
-                }
-                setTimeout(checkEthereum, 100);
             };
-            checkEthereum();
+            window.addEventListener("payperplane-wallet-response", handleResponse);
+            window.dispatchEvent(new CustomEvent("payperplane-connect-wallet"));
+            setTimeout(() => {
+                window.removeEventListener("payperplane-wallet-response", handleResponse);
+                console.log("[PayperPlane] Timeout waiting for ethereum provider");
+                resolve(false);
+            }, timeout);
         });
     }
     connectedAccount = null;
@@ -643,6 +648,104 @@ class PayperPlaneInjector {
                 resolve();
             }, 1e4);
         });
+    }
+
+    async switchToBlockchain(chainId, chainName) {
+        console.log(`[PayperPlane] Attempting to switch to ${chainName} (${chainId})...`);
+        return new Promise((resolve, reject) => {
+            const handleResponse = (event) => {
+                console.log("[PayperPlane] Received blockchain switch response:", event.detail);
+                window.removeEventListener("payperplane-blockchain-response", handleResponse);
+                if (event.detail.success) {
+                    console.log("[PayperPlane] Blockchain switch successful:", event.detail.message);
+                    this.showNetworkSwitchNotification(chainName);
+                    resolve();
+                } else {
+                    console.error("[PayperPlane] Blockchain switch failed:", event.detail.error);
+                    reject(new Error(event.detail.error));
+                }
+            };
+            window.addEventListener("payperplane-blockchain-response", handleResponse);
+            console.log("[PayperPlane] Dispatching blockchain switch request...");
+            window.dispatchEvent(new CustomEvent("payperplane-switch-blockchain", {
+                detail: { chainId, chainName }
+            }));
+            setTimeout(() => {
+                window.removeEventListener("payperplane-blockchain-response", handleResponse);
+                console.warn("[PayperPlane] Blockchain switch timeout - continuing anyway");
+                resolve();
+            }, 1e4);
+        });
+    }
+
+    showNetworkSwitchNotification(chainName) {
+        const notification = document.createElement("div");
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(33, 150, 243, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            color: #333;
+            padding: 20px 28px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            z-index: 10000;
+            font-weight: 600;
+            animation: slideIn 0.3s ease-out;
+            width: 300px;
+            max-width: 300px;
+        `;
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="
+                    width: 24px;
+                    height: 24px;
+                    background: #2196F3;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 14px;
+                    font-weight: bold;
+                ">✓</div>
+                <div>
+                    <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Network Switched</div>
+                    <div style="font-size: 14px; color: #666;">Connected to ${chainName}</div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(notification);
+
+        // Add animation keyframes if not already present
+        if (!document.querySelector('#network-switch-animation')) {
+            const style = document.createElement('style');
+            style.id = 'network-switch-animation';
+            style.textContent = `
+                @keyframes slideIn {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideIn 0.3s ease-out reverse';
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }, 3000);
     }
     async fetchTokenBalances() {
         console.log("[PayperPlane] Fetching token balances...");
@@ -755,7 +858,7 @@ class PayperPlaneInjector {
                     throw new Error("No wallet connected");
                 }
             }
-            // PayperPlane contract address
+            // PayperPlane contract address (same on all supported chains)
             const payperPlaneContract = "0xc6BB3C35f6a80338C49C3e4F2c083f21ac36d693";
             const bnbAsNumber = parseFloat(calculation.bnbAmount);
             const weiAmount = BigInt(Math.floor(bnbAsNumber * Math.pow(10, 18)));
@@ -786,8 +889,27 @@ class PayperPlaneInjector {
 
             const data = functionSelector + encodedParams;
 
+            // Get current network info for logging
+            let currentChainId, currentNetwork;
+            try {
+                currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+                const networkNames = {
+                    '0x38': 'BNB Smart Chain',
+                    '0xef': 'TAC Mainnet', 
+                    '0xa4ec': 'Celo Mainnet',
+                    '0x504': 'Moonbeam'
+                };
+                currentNetwork = networkNames[currentChainId] || `Chain ${parseInt(currentChainId, 16)}`;
+            } catch (error) {
+                console.warn("[PayperPlane] Could not get current chain ID:", error);
+                currentChainId = '0x38'; // Default to BSC
+                currentNetwork = 'BNB Smart Chain';
+            }
+
             console.log("[PayperPlane] Calling fund() on contract:", {
                 contract: payperPlaneContract,
+                network: currentNetwork,
+                chainId: currentChainId,
                 id: paymentId.toString(),
                 tokenAddress: "0x0000000000000000000000000000000000000000",
                 tokenAmount: weiAmount.toString(),
@@ -857,10 +979,24 @@ class PayperPlaneInjector {
                 width: 300px;
                 max-width: 300px;
             `;
+            // Get explorer URL based on current network
+            const explorerUrls = {
+                '0x38': `https://bscscan.com/tx/${txHash}`,
+                '0xef': `https://explorer.tac.build/tx/${txHash}`,
+                '0xa4ec': `https://explorer.celo.org/tx/${txHash}`,
+                '0x504': `https://moonbeam.moonscan.io/tx/${txHash}`
+            };
+            const explorerUrl = explorerUrls[currentChainId] || `https://bscscan.com/tx/${txHash}`;
+            const explorerName = currentNetwork.includes('BSC') ? 'BSCScan' : 
+                                currentNetwork.includes('TAC') ? 'TAC Explorer' :
+                                currentNetwork.includes('Celo') ? 'Celo Explorer' :
+                                currentNetwork.includes('Moonbeam') ? 'Moonscan' : 'Explorer';
+
             processingMessage.innerHTML = `
                 \u23F3 Transaction submitted!<br>
+                <small>Network: ${currentNetwork}</small><br>
                 <small>Hash: ${txHash.substring(0, 10)}...${txHash.substring(58)}</small><br>
-                <a href="https://bscscan.com/tx/${txHash}" target="_blank" style="color: #333; text-decoration: underline;">View on BSCScan</a>
+                <a href="${explorerUrl}" target="_blank" style="color: #333; text-decoration: underline;">View on ${explorerName}</a>
             `;
             document.body.appendChild(processingMessage);
             setTimeout(() => {
@@ -1183,15 +1319,11 @@ class PayperPlaneInjector {
             walletInfo.appendChild(connectedIcon);
         } else {
             this.checkWalletConnection().then(async (isConnected) => {
-                if (isConnected && window.ethereum) {
-                    const accounts = await window.ethereum.request({ method: "eth_accounts" });
-                    if (accounts && accounts.length > 0) {
-                        this.connectedAccount = accounts[0];
-                        walletInfo.innerHTML = `
-                            <span>Connected: ${accounts[0].substring(0, 6)}...${accounts[0].substring(38)}</span>
-                            <span style="color: #4CAF50; font-weight: bold;">\u25CF</span>
-                        `;
-                    }
+                if (isConnected && this.connectedAccount) {
+                    walletInfo.innerHTML = `
+                        <span>Connected: ${this.connectedAccount.substring(0, 6)}...${this.connectedAccount.substring(38)}</span>
+                        <span style="color: #4CAF50; font-weight: bold;">\u25CF</span>
+                    `;
                 }
             });
         }
@@ -1217,6 +1349,28 @@ class PayperPlaneInjector {
         `;
         tokenIcon.src = "https://bscscan.com/assets/bsc/images/svg/logos/token-light.svg?v=25.9.4.0";
         tokenIcon.alt = "BNB Token";
+        
+        // Add error handling for broken images
+        tokenIcon.onerror = () => {
+            console.log("[PayperPlane] Failed to load default token image");
+            // Fallback to colored circle with icon
+            tokenIcon.style.display = 'none';
+            const fallbackIcon = document.createElement("div");
+            fallbackIcon.style.cssText = `
+                width: 32px;
+                height: 32px;
+                background: #297561;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                font-weight: bold;
+                color: white;
+            `;
+            fallbackIcon.textContent = "B";
+            tokenIcon.parentNode.replaceChild(fallbackIcon, tokenIcon);
+        };
         const tokenInfo = document.createElement("div");
         tokenInfo.style.cssText = "flex: 1;";
         const tokenName = document.createElement("div");
@@ -1278,10 +1432,10 @@ class PayperPlaneInjector {
             margin-top: 4px;
         `;
         const tokens = [
-            { symbol: "BNB", name: "Binance Token", icon: "B", color: "#297561", address: "0xbb4CdB9Bd36B01bD1cBaEBF2De08d9173bc095c", enabled: true, imageUrl: "https://bscscan.com/assets/bsc/images/svg/logos/token-light.svg?v=25.9.4.0" },
-            { symbol: "ETH", name: "Ethereum", icon: "\u039E", color: "#627EEA", address: "0x2170Ed0880ac9A755fd29B2688956BD959F933F8", enabled: false },
-            { symbol: "USDT", name: "Tether USD", icon: "\u20AE", color: "#26A17B", address: "0x55d398326f99059fF775485246999027B3197955", enabled: false },
-            { symbol: "USDC", name: "USD Coin", icon: "$", color: "#2775CA", address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", enabled: false }
+            { symbol: "BNB", name: "Binance Token", icon: "B", color: "#297561", address: "0xbb4CdB9Bd36B01bD1cBaEBF2De08d9173bc095c", enabled: true, imageUrl: "https://bscscan.com/assets/bsc/images/svg/logos/token-light.svg?v=25.9.4.0", chainId: "0x38", chainName: "BNB Smart Chain" },
+            { symbol: "TAC", name: "Toncoin Access Chain", icon: "T", color: "#0088CC", address: "0x76A797A59Ba2C17726896976B7B4E3fA56eD3B51", enabled: true, imageUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/37338.png", chainId: "0xef", chainName: "TAC Mainnet" },
+            { symbol: "CELO", name: "Celo", icon: "C", color: "#35D07F", address: "0x88eeC49252c8cbc039DCdB394c0c2BA2f1637EA0", enabled: true, imageUrl: "https://static1.tokenterminal.com//celo/logo.png?logo_hash=e37b727d573d56157f3d2373da11d4450a43ba1f", chainId: "0xa4ec", chainName: "Celo Mainnet" },
+            { symbol: "GLMR", name: "Moonbeam", icon: "M", color: "#53CBC9", address: "0xAcc15dC74880C9944775448304B263D191c6077F", enabled: true, imageUrl: "https://assets.kraken.com/marketing/web/icons-uni-webp/s_glmr.webp?i=kds", chainId: "0x504", chainName: "Moonbeam" }
         ];
         let balances = {};
         this.fetchTokenBalances().then((fetchedBalances) => {
@@ -1316,6 +1470,36 @@ class PayperPlaneInjector {
                 `;
                 optionIcon.src = token.imageUrl;
                 optionIcon.alt = `${token.symbol} Token`;
+                
+                // Debug: Log the image URL being used
+                console.log(`[PayperPlane] Loading image for ${token.symbol}:`, token.imageUrl);
+                
+                // Add success handler to confirm image loading
+                optionIcon.onload = () => {
+                    console.log(`[PayperPlane] Successfully loaded image for ${token.symbol}`);
+                };
+                
+                // Add error handling for broken images
+                optionIcon.onerror = () => {
+                    console.log(`[PayperPlane] Failed to load image for ${token.symbol}:`, token.imageUrl);
+                    // Fallback to colored circle with icon
+                    optionIcon.style.display = 'none';
+                    const fallbackIcon = document.createElement("div");
+                    fallbackIcon.style.cssText = `
+                        width: 32px;
+                        height: 32px;
+                        background: ${token.color};
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 16px;
+                        font-weight: bold;
+                        color: white;
+                    `;
+                    fallbackIcon.textContent = token.icon;
+                    optionIcon.parentNode.replaceChild(fallbackIcon, optionIcon);
+                };
             } else {
                 optionIcon.style.cssText = `
                     width: 32px;
@@ -1367,6 +1551,17 @@ class PayperPlaneInjector {
                     e.stopPropagation();
                     return;
                 }
+                
+                // Switch to the appropriate blockchain if needed
+                if (token.chainId) {
+                    try {
+                        await this.switchToBlockchain(token.chainId, token.chainName);
+                    } catch (error) {
+                        console.error(`[PayperPlane] Failed to switch to ${token.chainName}:`, error);
+                        // Continue with token selection even if chain switch fails
+                    }
+                }
+                
                 if (token.imageUrl) {
                     tokenIcon.src = token.imageUrl;
                     tokenIcon.alt = `${token.symbol} Token`;
@@ -1638,9 +1833,11 @@ class PayperPlaneInjector {
             return fundingId;
         } catch (error) {
             console.error("[PayperPlane] Failed to generate funding ID:", error);
+            console.log("[PayperPlane] Backend not available, using fallback ID generation");
             // Fallback to timestamp-based ID if backend fails
-            console.log("[PayperPlane] Falling back to timestamp-based ID");
-            return BigInt(Date.now() * 1000 + Math.floor(Math.random() * 1000));
+            const fallbackId = BigInt(Date.now() * 1000 + Math.floor(Math.random() * 1000));
+            console.log("[PayperPlane] Using fallback funding ID:", fallbackId.toString());
+            return fallbackId;
         }
     }
 
