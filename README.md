@@ -43,19 +43,32 @@ A seamless browser extension that:
 
 *Visual representation of how PayperPlane transforms the payment experience from traditional banking to seamless crypto payments*
 
-### 🔄 PayperPlane Payment Flow
+### 🔄 PayperPlane Payment Flow - Parallel Processing
 
 ```mermaid
 graph TD
-    A[User shops on any website] --> B[Extension detects payment form]
-    B --> C[User clicks 'Pay with Crypto']
-    C --> D[Connect wallet - MetaMask/WalletConnect]
-    D --> E[Select cryptocurrency - BTC, ETH, BNB, etc.]
-    E --> F[Confirm crypto payment]
-    F --> G[Smart contract processes payment]
-    G --> H[Lithic API generates virtual card]
-    H --> I[Virtual card processes merchant payment]
-    I --> J[Payment successful - No card input needed!]
+    A[User shops on ANY website] --> B[Extension detects payment form]
+    B --> C[Extension injects wallet connector]
+    C --> D[Website becomes dApp-like with crypto payment option]
+    
+    D --> E[User clicks 'Pay with Crypto']
+    E --> F[Connect wallet - MetaMask/WalletConnect]
+    F --> G[Select cryptocurrency - BTC, ETH, BNB, etc.]
+    G --> H[Confirm crypto payment]
+    
+    H --> I[Smart contract processes payment]
+    H --> J[Lithic API generates virtual card]
+    H --> K[Backend monitors blockchain events]
+    
+    I --> L[Payment confirmed on blockchain]
+    J --> M[Virtual card ready for merchant]
+    K --> N[Event triggers card activation]
+    
+    L --> O[Payment successful]
+    M --> O
+    N --> O
+    
+    O --> P[No card input needed - Website converted to dApp!]
     
     style A fill:#e1f5fe
     style B fill:#f3e5f5
@@ -67,7 +80,44 @@ graph TD
     style H fill:#f1f8e9
     style I fill:#e8eaf6
     style J fill:#e0f2f1
+    style K fill:#f3e5f5
+    style L fill:#fff3e0
+    style M fill:#e8f5e8
+    style N fill:#fff8e1
+    style O fill:#e0f2f1
+    style P fill:#c8e6c9
 ```
+
+### 🌐 Converting Any Website to a dApp
+
+PayperPlane's browser extension **transforms any website into a dApp-like experience** by:
+
+1. **🔍 Detecting Payment Forms** - Scans any website for card input fields
+2. **💉 Injecting Wallet Connector** - Adds crypto payment interface to any site
+3. **🔄 Parallel Processing** - Handles crypto payment and card generation simultaneously
+4. **🎯 Seamless Integration** - Users never leave the original website
+
+**The Magic**: Any website with payment forms becomes crypto-compatible instantly!
+
+### 🚀 Universal dApp Conversion
+
+PayperPlane **converts any website into a dApp** by injecting wallet connectivity where none existed:
+
+| **Traditional Website** | **With PayperPlane Extension** |
+|:---:|:---:|
+| ❌ Card input only | ✅ Crypto payment option added |
+| ❌ No wallet support | ✅ Wallet connector injected |
+| ❌ Traditional banking | ✅ Blockchain integration |
+| ❌ Geographic restrictions | ✅ Global crypto access |
+
+**Examples of websites that become dApp-like:**
+- 🛒 **Amazon** - Pay with crypto instead of cards
+- 🍕 **Uber Eats** - Crypto payments for food delivery  
+- 🎮 **Steam** - Buy games with Bitcoin
+- 📱 **Netflix** - Subscribe with Ethereum
+- ✈️ **Airbnb** - Book stays with crypto
+
+*Any website with payment forms becomes a crypto-compatible dApp instantly!*
 
 ### 🏦 Powered by Lithic Card Issuing
 
@@ -84,15 +134,22 @@ PayperPlane leverages [Lithic's](https://www.lithic.com/) industry-leading card 
 ## 🏗️ Architecture Overview
 
 ```
-┌─────────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   Browser Extension │ ←──→│   Smart Contract │ ←──→│   Backend API   │
-│   (Content Script)  │     │   (CryptoBnB)    │     │   (FastAPI)     │
-└─────────────────────┘     └──────────────────┘     └─────────────────┘
-         ↓                           ↓                         ↓
-   Detects Forms              Handles Funding           Issues Cards
-   Injects UI                 Stores Events             Processes Payments
-   Wallet Connect             Admin Controls            Monitors Chain
+┌─────────────────────┐     ┌──────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Browser Extension │ ←──→│   Smart Contract │ ←──→│   Backend API   │ ←──→│   Lithic API    │
+│   (Content Script)  │     │   (CryptoBnB)    │     │   (FastAPI)     │     │  (Card Issuing) │
+└─────────────────────┘     └──────────────────┘     └─────────────────┘     └─────────────────┘
+         ↓                           ↓                         ↓                         ↓
+   Detects Forms              Handles Funding           Processes Events         Generates Cards
+   Injects UI                 Stores Events             Monitors Chain           Virtual Cards
+   Wallet Connect             Admin Controls            Crypto Conversion         Payment Processing
 ```
+
+### 🔗 Integration Partners
+
+- **[Lithic](https://www.lithic.com/)** - Card issuing and virtual card generation
+- **Smart Contracts** - Crypto payment processing and fund management  
+- **Backend API** - Event monitoring and payment orchestration
+- **Browser Extension** - User interface and payment form detection
 
 ## 📁 Project Structure
 
