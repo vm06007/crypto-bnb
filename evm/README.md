@@ -116,3 +116,12 @@ Comprehensive test suite with **17 test cases** covering:
 - ✅ Edge cases and error handling
 
 Run tests: `forge test`
+
+# Deployments
+The address across all chains is `0xc6BB3C35f6a80338C49C3e4F2c083f21ac36d693`
+- CELO Mainnet: https://celo.blockscout.com/address/0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693
+- CELO Testnet: https://celo-sepolia.blockscout.com/address/0xc6BB3C35f6a80338C49C3e4F2c083f21ac36d693
+- TAC Mainnet (TON): https://explorer.tac.build/address/0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693
+- TAC Testnet (TON): https://spb.explorer.tac.build/address/0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693
+- BNB Smart Chain: https://bscscan.com/address/0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693
+- Moonbeam (Polkadot): https://moonbeam.moonscan.io/address/0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693
