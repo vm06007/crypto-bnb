@@ -36,9 +36,9 @@ contract PayperPlane is Ownable {
     error InvalidAmount();
 
     /// @notice Constructor to set initial supported tokens
-    constructor() {
+    constructor(address _owner) {
         // Set ownership to deployer
-        _initializeOwner(msg.sender);
+        _initializeOwner(_owner);
     }
 
     /// @notice Fund a virtual card with crypto payment
