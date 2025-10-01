@@ -180,7 +180,7 @@
                     <div class="hacker-profiles">
                         <div class="hacker-card">
                             <div class="hacker-avatar">
-                                <div class="avatar-placeholder">👨‍💻</div>
+                                <img src="./files/team_vitalik.jpeg" alt="Vitalik" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />
                             </div>
                             <h4>Vitalik</h4>
                             <p class="hacker-role">Full-Stack Developer</p>
@@ -194,7 +194,7 @@
 
                         <div class="hacker-card">
                             <div class="hacker-avatar">
-                                <div class="avatar-placeholder">👩‍💻</div>
+                                <img src="./files/team_lya.jpeg" alt="Lya" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />
                             </div>
                             <h4>Lya</h4>
                             <p class="hacker-role">Frontend Engineer</p>
@@ -208,7 +208,7 @@
 
                         <div class="hacker-card">
                             <div class="hacker-avatar">
-                                <div class="avatar-placeholder">🧑‍💻</div>
+                                <img src="./files/team_akuti.png" alt="Akuti" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />
                             </div>
                             <h4>Akuti</h4>
                             <p class="hacker-role">Backend Engineer</p>
@@ -278,7 +278,7 @@
                         </ul>
                     </div>
                     <p style="margin-top: 20px; text-align: center;">
-                        <strong>Ready to start?</strong> Install the extension and pay with crypto everywhere!
+                        <strong>Ready to start?</strong> Install the extension from our GitHub repository!
                     </p>
                 </div>
             `,
