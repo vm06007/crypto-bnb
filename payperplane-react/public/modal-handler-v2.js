@@ -226,10 +226,7 @@
                 <div class="modal-section">
                     <div class="currency-grid">
                         <div class="currency-item">
-                            <strong>Bitcoin (BTC)</strong>
-                        </div>
-                        <div class="currency-item">
-                            <strong>Ethereum (ETH)</strong>
+                            <strong>ETH</strong>
                         </div>
                         <div class="currency-item">
                             <strong>USDT</strong>
@@ -240,11 +237,16 @@
                         <div class="currency-item">
                             <strong>BNB</strong>
                         </div>
+                    </div>
+                    <p style="margin-top: 20px; text-align: center; font-weight: bold;">Coming Soon</p>
+                    <div class="currency-grid" style="margin-top: 20px; display: flex; justify-content: center; gap: 20px;">
+                        <div class="currency-item">
+                            <strong>Bitcoin (BTC)</strong>
+                        </div>
                         <div class="currency-item">
                             <strong>Solana (SOL)</strong>
                         </div>
                     </div>
-                    <p style="margin-top: 20px;">And many more...</p>
                 </div>
             `,
             demo: `
