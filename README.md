@@ -154,6 +154,135 @@ Backend instantly generates single-use virtual cards for each transaction, ensur
    uv run fastapi dev main.py
    ```
 
+## 🔧 Building and Installing the Browser Extension
+
+### Prerequisites for Extension
+- **Bun** (faster alternative to npm): Install from [bun.sh](https://bun.sh)
+- **Chrome/Edge/Brave Browser**: Any Chromium-based browser
+- **Icon Image**: A `miner.png` file in the root directory (for extension icons)
+
+### Building the Extension
+
+1. **Install dependencies**
+   ```bash
+   # From the root directory
+   bun install
+   ```
+
+2. **Build the extension**
+   ```bash
+   # This will compile TypeScript files and copy assets
+   bun run build:extension
+   
+   # OR, to also generate icons from miner.png
+   bun run build
+   ```
+
+   The build process will:
+   - Compile TypeScript files to JavaScript
+   - Copy HTML, CSS, and manifest files
+   - Generate extension icons (16x16, 32x32, 48x48, 128x128)
+   - Output everything to `dist/extension/`
+
+3. **Verify the build**
+   ```bash
+   ls -la dist/extension/
+   ```
+   
+   You should see:
+   - `manifest.json` - Extension configuration
+   - `background.js` - Service worker
+   - `content.js` & `content.css` - Content scripts
+   - `popup.js`, `popup.html`, `popup.css` - Extension popup
+   - `offscreen.js` & `offscreen.html` - Offscreen document
+   - `assets/` - Icons and images
+   - `inject/` - Wallet connector scripts
+
+### Installing in Chrome/Edge/Brave
+
+1. **Open Extension Management**
+   - Chrome: Navigate to `chrome://extensions/`
+   - Edge: Navigate to `edge://extensions/`
+   - Brave: Navigate to `brave://extensions/`
+
+2. **Enable Developer Mode**
+   - Toggle the "Developer mode" switch in the top right corner
+
+3. **Load the Extension**
+   - Click "Load unpacked" button
+   - Navigate to `crypto-bnb/dist/extension/`
+   - Select the folder and click "Open"
+
+4. **Verify Installation**
+   - The extension should appear in your extensions list
+   - You should see the PayperPlane icon in your browser toolbar
+   - If the icon doesn't appear, click the puzzle piece icon and pin PayperPlane
+
+### Testing the Extension
+
+1. **Basic Functionality**
+   - Click the extension icon to open the popup
+   - The popup should display the PayperPlane interface
+   - Check the browser console for any errors (F12 → Console)
+
+2. **Payment Detection**
+   - Navigate to any e-commerce site with a checkout form
+   - The extension should detect payment forms automatically
+   - Look for the PayperPlane overlay on card input fields
+
+3. **Wallet Connection**
+   - Click "Connect Wallet" in the extension popup
+   - MetaMask or your Web3 wallet should prompt for connection
+   - Once connected, your address should appear in the popup
+
+### Development Mode
+
+For active development with hot reload:
+
+1. **Watch Mode** (if implemented)
+   ```bash
+   bun run dev
+   ```
+
+2. **Manual Reload**
+   - After making changes, rebuild: `bun run build:extension`
+   - Go to `chrome://extensions/`
+   - Click the refresh icon on the PayperPlane extension card
+
+### Troubleshooting
+
+**Extension won't load:**
+- Ensure all files are built correctly in `dist/extension/`
+- Check that `manifest.json` is valid JSON
+- Look for errors in the extension management page
+
+**Icons missing:**
+- Make sure `miner.png` exists in the root directory
+- Run `bun run build` (not just `build:extension`)
+- Manually create icons if needed (16x16, 32x32, 48x48, 128x128 PNG files)
+
+**Content script not injecting:**
+- Check the `content_scripts` section in `manifest.json`
+- Verify the `matches` patterns include your test sites
+- Check browser console for content script errors
+
+**Popup not opening:**
+- Ensure `popup.html` exists in `dist/extension/`
+- Check for JavaScript errors in the popup console (right-click popup → Inspect)
+
+**Wallet connection issues:**
+- Ensure MetaMask or Web3 wallet is installed
+- Check that the site is served over HTTPS (or localhost)
+- Look for errors in both extension and page consoles
+
+### Security Notes for Local Development
+
+- The extension has access to all websites by default
+- Be cautious when testing on real e-commerce sites
+- Use test/sandbox environments when possible
+- Never enter real payment information during development
+- Keep your test wallets separate from real funds
+
 ## 📊 Key Takeaways
 
 ### Technical Excellence
