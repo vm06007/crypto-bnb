@@ -43,19 +43,45 @@ class PayperPlaneInjector {
         const testElement = document.createElement("div");
         testElement.style.cssText = `
             position: fixed;
-            top: 10px;
-            right: 10px;
-            background: #F0B90B;
-            color: #000;
-            padding: 10px;
-            border-radius: 5px;
+            top: 20px;
+            right: 20px;
+            background: rgba(240, 185, 11, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(240, 185, 11, 0.2);
+            color: #F0B90B;
+            padding: 16px 24px;
+            border-radius: 16px;
             z-index: 10000;
-            font-weight: bold;
+            font-weight: 600;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            animation: slideIn 0.3s ease-out;
         `;
         testElement.textContent = "PayperPlane Extension Loaded!";
         document.body.appendChild(testElement);
+
+        // Add animation keyframes
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
         setTimeout(() => {
-            testElement.remove();
+            testElement.style.animation = 'slideIn 0.3s ease-out reverse';
+            setTimeout(() => {
+                testElement.remove();
+                style.remove();
+            }, 300);
         }, 3000);
     }
     observePageChanges() {
@@ -435,19 +461,28 @@ class PayperPlaneInjector {
         const successElement = document.createElement("div");
         successElement.style.cssText = `
             position: fixed;
-            top: 50px;
-            right: 10px;
-            background: #4CAF50;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
+            top: 80px;
+            right: 20px;
+            background: rgba(76, 175, 80, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            padding: 16px 24px;
+            border-radius: 16px;
             z-index: 10000;
-            font-weight: bold;
+            font-weight: 600;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            animation: slideIn 0.3s ease-out;
         `;
         successElement.textContent = "Crypto Toggle Added!";
         document.body.appendChild(successElement);
+
         setTimeout(() => {
-            successElement.remove();
+            successElement.style.animation = 'slideIn 0.3s ease-out reverse';
+            setTimeout(() => {
+                successElement.remove();
+            }, 300);
         }, 3000);
     }
     hideQuickPayTerms() {
@@ -757,13 +792,17 @@ class PayperPlaneInjector {
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                background: #2196F3;
-                color: white;
-                padding: 16px 24px;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                background: rgba(33, 150, 243, 0.1);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid rgba(33, 150, 243, 0.3);
+                color: #fff;
+                padding: 20px 28px;
+                border-radius: 20px;
+                box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
                 z-index: 10000;
                 font-weight: 600;
+                animation: slideIn 0.3s ease-out;
             `;
             processingMessage.innerHTML = `
                 \u23F3 Transaction submitted!<br>
@@ -774,7 +813,8 @@ class PayperPlaneInjector {
             setTimeout(() => {
                 console.log("[PayperPlane] Simulating transaction confirmation...");
                 processingMessage.innerHTML = "\u2713 Transaction confirmed!<br><small>Processing payment...</small>";
-                processingMessage.style.background = "#FF9800";
+                processingMessage.style.background = "rgba(255, 152, 0, 0.1)";
+                processingMessage.style.borderColor = "rgba(255, 152, 0, 0.3)";
                 setTimeout(() => {
                     processingMessage.remove();
                     const successMessage = document.createElement("div");
@@ -782,15 +822,19 @@ class PayperPlaneInjector {
                         position: fixed;
                         top: 20px;
                         right: 20px;
-                        background: #4CAF50;
-                        color: white;
-                        padding: 16px 24px;
-                        border-radius: 8px;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                        background: rgba(76, 175, 80, 0.1);
+                        backdrop-filter: blur(12px);
+                        -webkit-backdrop-filter: blur(12px);
+                        border: 1px solid rgba(76, 175, 80, 0.3);
+                        color: #fff;
+                        padding: 20px 28px;
+                        border-radius: 20px;
+                        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
                         z-index: 10000;
                         font-weight: 600;
+                        animation: slideIn 0.3s ease-out;
                     `;
-                    successMessage.innerHTML = "\u2713 Crypto payment successful!<br><small>Completing your booking...</small>";
+                    successMessage.innerHTML = "<span style='font-size: 20px;'>✓</span> Crypto payment successful!<br><small style='opacity: 0.9;'>Completing your booking...</small>";
                     document.body.appendChild(successMessage);
                     setTimeout(() => {
                         if (this.originalConfirmPayButton) {
@@ -1437,22 +1481,29 @@ class PayperPlaneInjector {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #4CAF50;
-            color: white;
-            padding: 16px 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            background: rgba(76, 175, 80, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            color: #fff;
+            padding: 20px 28px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
             z-index: 10000;
             font-weight: 600;
             max-width: 300px;
+            animation: slideIn 0.3s ease-out;
         `;
         successMessage.innerHTML = `
-            \u2705 Payment Successful!<br>
+            <span style="font-size: 24px;">✅</span> Payment Successful!<br>
             <small style="opacity: 0.9;">Your BNB payment has been processed</small>
         `;
         document.body.appendChild(successMessage);
         setTimeout(() => {
-            successMessage.remove();
+            successMessage.style.animation = 'slideIn 0.3s ease-out reverse';
+            setTimeout(() => {
+                successMessage.remove();
+            }, 300);
         }, 5000);
     }
     destroy() {
@@ -1484,15 +1535,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #4CAF50;
-            color: white;
-            padding: 16px 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            background: rgba(76, 175, 80, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            color: #fff;
+            padding: 20px 28px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
             z-index: 10000;
             font-weight: 600;
+            animation: slideIn 0.3s ease-out;
         `;
-        successMessage.innerHTML = "\u2713 Crypto payment successful!<br><small>Completing your booking...</small>";
+        successMessage.innerHTML = "<span style='font-size: 20px;'>✓</span> Crypto payment successful!<br><small style='opacity: 0.9;'>Completing your booking...</small>";
         document.body.appendChild(successMessage);
         if (injector && injector.originalConfirmPayButton) {
         }
