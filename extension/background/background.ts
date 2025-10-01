@@ -1,8 +1,8 @@
-// Background service worker for OnlyBnB
+// Background service worker for PayperPlane
 
 import { PaymentRequest, VirtualCard } from '../../shared/types';
 
-class OnlyBnBBackground {
+class PayperPlaneBackground {
     private currentPayment: PaymentRequest | null = null;
     private offscreenDocumentPath = 'offscreen.html';
     private backendUrl = 'http://localhost:3000'; // In production, update this to your backend URL
@@ -282,7 +282,7 @@ class OnlyBnBBackground {
         chrome.notifications.create({
             type: 'basic',
             iconUrl: chrome.runtime.getURL('assets/icon128.png'),
-            title: 'OnlyBnB Error',
+            title: 'PayperPlane Error',
             message: message,
             priority: 2,
         });
@@ -290,11 +290,11 @@ class OnlyBnBBackground {
 }
 
 // Initialize background service
-new OnlyBnBBackground();
+new PayperPlaneBackground();
 
 // Keep service worker alive
 chrome.runtime.onInstalled.addListener(() => {
-    console.log('[OnlyBnB] Extension installed');
+    console.log('[PayperPlane] Extension installed');
 });
 
 // Periodic keepalive

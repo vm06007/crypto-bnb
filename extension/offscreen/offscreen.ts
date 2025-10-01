@@ -285,7 +285,7 @@ class OffscreenCardAdder {
                         'input[name="nickname"], input[placeholder*="Nickname"]'
                     );
                     if (nicknameField) {
-                        this.setInputValue(nicknameField, 'OnlyBNB Card');
+                        this.setInputValue(nicknameField, 'PayperPlane Card');
                     }
 
                     return true;
