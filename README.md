@@ -221,12 +221,13 @@ Backend instantly generates single-use virtual cards for each transaction, ensur
 
 ### PayperPlane Smart Contract on BSC Mainnet
 
-The PayperPlane smart contract is live on the Binance Smart Chain (BSC) mainnet:
-
-- **Contract Address**: [`0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693`](https://bscscan.com/address/0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693)
-- **Network**: BSC Mainnet
-- **Chain ID**: 56
-- **Explorer**: [View on BscScan](https://bscscan.com/address/0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693)
+The PayperPlane smart contract is live on the Binance Smart Chain (BSC) mainnet, CELO, TAC (TON Application Chain) and Moonbeam (Polkadot). The address across all chains is `0xc6BB3C35f6a80338C49C3e4F2c083f21ac36d693`
+- CELO Mainnet: https://celo.blockscout.com/address/0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693
+- CELO Testnet: https://celo-sepolia.blockscout.com/address/0xc6BB3C35f6a80338C49C3e4F2c083f21ac36d693
+- TAC Mainnet (TON): https://explorer.tac.build/address/0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693
+- TAC Testnet (TON): https://spb.explorer.tac.build/address/0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693
+- BNB Smart Chain: https://bscscan.com/address/0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693
+- Moonbeam (Polkadot): https://moonbeam.moonscan.io/address/0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693
 
 ### Contract Features
 
