@@ -91,8 +91,8 @@
     // Get modal title based on type
     function getModalTitle(type) {
         const titles = {
-            product: 'The Problem We Solve',
-            solutions: 'Solutions for Users',
+            product: 'The Problem We Are Solving',
+            solutions: 'Our Solution',
             builders: 'Builders',
             currencies: 'Supported Currencies',
             demo: 'See It In Action',
@@ -106,68 +106,70 @@
         const content = {
             product: `
                 <div class="modal-section">
-                    <h3>The Card Input Problem</h3>
-                    <p>Every website forces you to enter card details, but you want to pay with crypto. This is where our plugin changes everything.</p>
+                    <h3>The Big Picture</h3>
+                    <p>$3.9 trillion in cryptocurrency is held globally,  yet <1% of online merchants accept crypto payments.</p>
+                    <div style="height: 16px;"></div>
 
-                    <h3>The Frustration We Solve</h3>
-                    <p>Picture this: You're shopping online and reach the checkout page. The site shows those familiar card input fields:</p>
+                    <h3>The Frustrations We Solve</h3>
                     <ul>
-                        <li><strong>Card Number</strong> - But you don't want to use a card</li>
-                        <li><strong>Expiry Date</strong> - Your crypto doesn't expire</li>
-                        <li><strong>CVV</strong> - You want to pay with your wallet, not plastic</li>
-                        <li><strong>Billing Address</strong> - Why share personal info when crypto is borderless?</li>
+                        <li><strong>• You have crypto ready to spend</strong> - But sites force you into the traditional banking system</li>
+                        <li><strong>• No direct crypto payment options</strong> - Even tech-forward companies still use cards</li>
+                        <li><strong>• Unnecessary friction</strong> - Users need to converting crypto → fiat → bank → card </li>
+                        <li><strong>• Privacy invasion</strong> - Card payments expose your financial data</li>
                     </ul>
 
-                    <h3>Why This Matters</h3>
+                    <h3>Target Users</h3>
                     <ul>
-                        <li><strong>You have crypto ready to spend</strong> - But sites force you into the traditional banking system</li>
-                        <li><strong>No direct crypto option</strong> - Even tech-forward companies still require cards</li>
-                        <li><strong>Unnecessary friction</strong> - Converting crypto → fiat → bank → card is wasteful</li>
-                        <li><strong>Privacy invasion</strong> - Card payments expose your financial data</li>
+                        <li><strong>• Digital nomads & travelers</strong> - 35M+ remote workers need flexible payment options</li>
+                        <li><strong>• Crypto natives</strong> - 560M+ crypto owners</li>
+                        <li><strong>• The unbanked</strong> - 1.4B adults without bank accounts</li>
+                        <li><strong>• International users</strong> - Avoid 2–5% forex fees and poor exchange rates</li>
                     </ul>
 
-                    <h3>Our Plugin Solution</h3>
-                    <p>When you see card input fields on any website, our browser extension springs into action:</p>
-                    <ul>
-                        <li>✨ <strong>Detects payment forms automatically</strong></li>
-                        <li>🔄 <strong>Adds "Pay with Crypto" option instantly</strong></li>
-                        <li>💳 <strong>Handles the card payment on your behalf</strong></li>
-                        <li>🔒 <strong>You never touch the banking system</strong></li>
-                    </ul>
 
-                    <p style="margin-top: 20px; font-size: 18px; text-align: center;"><strong>Transform any card payment form into a crypto payment gateway</strong><br/>Your browser extension that makes crypto spendable everywhere.</p>
+                    
                 </div>
             `,
             solutions: `
                 <div class="modal-section">
-                    <h3>The PayperPlane Solution</h3>
+                    <h3>The PayperPlane Plugin</h3>
                     <p>A browser extension that detects card payment forms and enables crypto payments - even on sites that don't accept crypto!</p>
-
+                    <br/>     
                     <h3>How It Works</h3>
+                    <p>When you see card input fields on any website, our browser extension springs into action:</p>
                     <ul>
-                        <li><strong>1. Shop normally</strong> - Browse any website as usual</li>
-                        <li><strong>2. Extension activates</strong> - When you reach checkout, we detect the payment form</li>
-                        <li><strong>3. Pay with crypto</strong> - Choose your preferred cryptocurrency</li>
-                        <li><strong>4. Instant conversion</strong> - We handle the crypto-to-card payment seamlessly</li>
+                        <li><strong>• Detects payment forms automatically</strong> ✨ </li>
+                        <li><strong>• Adds "Pay with Crypto" option instantly</strong> 🔄 </li>
+                        <li><strong>• Handles the card payment on your behalf</strong> 💳 </li>
+                        <li><strong>• You never touch the banking system</strong> 🔒 </li>
                     </ul>
-
+                    <p>In the background we generate one-time use virtual cards with the correct amount of fiat currency to provide seamless crypto payment.</p>
+                    <br/>     
+                    <h3>How It Compares With Other Solutions</h3>
+                    <div style="text-align: center; margin: 20px 0;">
+                        <img src="./files/comparison_chart.png" alt="Comparison chart showing PayperPlane vs other solutions" style="max-width: 100%; height: auto; border-radius: 8px;" />
+                    </div>
+                    <br/>     
                     <h3>Key Benefits</h3>
                     <ul>
-                        <li><strong>Universal compatibility</strong> - Works on ANY site that accepts cards</li>
-                        <li><strong>No merchant integration needed</strong> - Sites don't need to support crypto</li>
-                        <li><strong>Keep your crypto</strong> - Spend directly without selling first</li>
-                        <li><strong>Privacy preserved</strong> - No need to share bank details with merchants</li>
-                        <li><strong>Global access</strong> - Works anywhere, no geographic restrictions</li>
+                        <li>• Works on ANY site that accepts cards</li>
+                        <li>• No merchant integration needed</li>
+                        <li>• Keep your crypto</li>
+                        <li>• Privacy preserved</li>
+                        <li>• Global access</li>
                     </ul>
 
-                    <h3>Perfect For</h3>
+                    <h3>Cool Features</h3>
                     <ul>
-                        <li>Shopping on sites that only accept traditional payments</li>
-                        <li>International purchases without foreign transaction fees</li>
-                        <li>Subscriptions and services that don't accept your local payment methods</li>
-                        <li>Online shopping when you prefer to use crypto</li>
-                        <li>Situations where traditional banking is unavailable or restricted</li>
+                        <li>• <strong>Universal wallet support</strong> - Works with MetaMask, Rabby, Privy, and any EVM wallet</li>
+                        <li>• <strong>Major crypto support</strong> - USDC, USDT, ETH, and more</li>
+                        <li>• <strong>Multi-chain ready</strong> - BSC, Celo, TAC, Moonbeam, and others</li>
+                        <li>• <strong>Beyond shopping</strong> - Works for car rentals, flights, e-commerce, subscriptions</li>
+                        <li>• <strong>Easy refunds</strong> - Crypto automatically returned to your wallet</li>
+                        <li>• <strong>Built-in compliance</strong> - KYC verification and sanctions checking (planned)</li>
+                        <li>• <strong>Smart optimization</strong> - Auto-selects cheapest chain and prioritizes stablecoins (planned)</li>
                     </ul>
+
                 </div>
             `,
             builders: `
@@ -401,13 +403,12 @@
 
         .modal-section li {
             padding: 8px 0;
-            padding-left: 20px;
             position: relative;
             color: #666;
         }
 
         .modal-section li:before {
-            content: "✓";
+            content: "";
             position: absolute;
             left: 0;
             color: #0066cc;
@@ -659,3 +660,4 @@
 
     console.log('Modal handler v2 loaded');
 })();
+
