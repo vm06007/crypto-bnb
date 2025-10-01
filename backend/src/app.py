@@ -50,7 +50,7 @@ settings = Settings()
 
 # If the contract indexes a string, the log contains keccak256(string) in the topic.
 # We cannot reverse the hash, so we map known codes to their hashes for decoding.
-SUPPORTED_CURRENCY_CODES = ["USD", "EUR", "GBP"]
+SUPPORTED_CURRENCY_CODES = ["USD", "EUR", "GBP", "SGD"]
 CURRENCY_HASH_TO_CODE: Dict[bytes, str] = {bytes(Web3.keccak(text=code)): code for code in SUPPORTED_CURRENCY_CODES}
 
 
