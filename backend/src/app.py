@@ -78,6 +78,7 @@ class Funding(SQLModel, table=True):
     event_received: bool = Field(default=False, index=True)
     currency_code: Optional[str] = Field(default=None)
     fiat_amount: Optional[int] = Field(default=None, description="Fiat amount in minor units")
+    tx_sender: Optional[str] = Field(default=None, index=True)
     # Card info
     card_token: Optional[str] = Field(default=None, index=True)
     card_last_four: Optional[str] = Field(default=None)
@@ -119,8 +120,8 @@ class LithicService:
         self.environment = environment
         self.client = Lithic(api_key=api_key, environment=environment)
 
-    def create_virtual_card(self) -> Dict[str, Any]:
-        card = self.client.cards.create(type="VIRTUAL")
+    def create_virtual_card(self, tx_sender: Optional[str]) -> Dict[str, Any]:
+        card = self.client.cards.create(type="VIRTUAL", memo=tx_sender or "PayperPlane User")
         # Convert to dict for serialization
         return {
             "token": getattr(card, "token", None),
@@ -225,10 +226,18 @@ class FundedEventListener:
                             currency_value = CURRENCY_HASH_TO_CODE.get(bytes(raw_cc))
                         elif isinstance(raw_cc, str):
                             currency_value = raw_cc
+                        # Load transaction to capture sender
+                        try:
+                            tx = self.web3.eth.get_transaction(ev["transactionHash"])  # type: ignore[index]
+                            tx_sender = tx.get("from")
+                        except Exception:
+                            tx_sender = None
+                            print(f"Error getting transaction: {ev['transactionHash']}")
                         self._handle_funded_event(
                             funding_id=int(args["id"]),
                             fiat_amount=int(args["amount"]),
                             currency_code=currency_value,
+                            tx_sender=tx_sender,
                         )
                     self.last_block = to_block
             except Exception:
@@ -236,7 +245,7 @@ class FundedEventListener:
                 pass
             time.sleep(settings.poll_interval_seconds)
 
-    def _handle_funded_event(self, funding_id: int, fiat_amount: int, currency_code: Optional[str]) -> None:
+    def _handle_funded_event(self, funding_id: int, fiat_amount: int, currency_code: Optional[str], tx_sender: Optional[str]) -> None:
         # Upsert funding, then create card (sandbox) and save
         with Session(engine) as session:
             funding = session.get(Funding, str(funding_id))
@@ -247,11 +256,16 @@ class FundedEventListener:
             funding.event_received = True
             funding.fiat_amount = fiat_amount
             funding.currency_code = currency_code
+            if tx_sender:
+                try:
+                    funding.tx_sender = Web3.to_checksum_address(tx_sender)
+                except Exception:
+                    funding.tx_sender = tx_sender
 
             # Create lithic card if not already created
             if not funding.card_token:
                 try:
-                    card = lithic_service.create_virtual_card()
+                    card = lithic_service.create_virtual_card(funding.tx_sender)
                     funding.card_token = card.get("token")
                     funding.card_last_four = card.get("last_four")
                     funding.card_exp_month = card.get("exp_month")
