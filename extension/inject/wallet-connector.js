@@ -158,7 +158,7 @@
             const tokenBalanceCalls = Object.entries(tokenContracts).map(([symbol, address]) => {
                 // Encode the account address for balanceOf(address)
                 const data = balanceOfSelector + account.slice(2).padStart(64, '0');
-                
+
                 return window.ethereum.request({
                     method: 'eth_call',
                     params: [{

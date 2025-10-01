@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "PayperPlane - Pay with Crypto on popular travel websites like Airbnb",
+    "name": "PayperPlane - Pay with Crypto",
     "version": "1.0.0",
-    "description": "Seamlessly pay for your travel bookings using crypto",
+    "description": "Seamlessly pay for your travel bookings using crypto on popular travel websites like Airbnb",
     "permissions": [
         "storage",
         "activeTab",
