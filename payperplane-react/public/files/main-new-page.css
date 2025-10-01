@@ -672,8 +672,8 @@
     }
     .main-new-solutions__description {
         max-width: 1000px;
-        font-size: 20px;
-        line-height: 28px;
+        font-size: 22px;
+        line-height: 32px;
     }
     .main-new-solutions__buttons {
         flex-direction: row;

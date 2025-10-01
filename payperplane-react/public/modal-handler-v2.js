@@ -93,7 +93,7 @@
         const titles = {
             product: 'The Problem We Solve',
             solutions: 'Solutions for Users',
-            builders: 'Builder Program',
+            builders: 'Builders',
             currencies: 'Supported Currencies',
             demo: 'See It In Action',
             contact: 'Contact Us'
@@ -180,7 +180,7 @@
                             <div class="hacker-avatar">
                                 <div class="avatar-placeholder">👨‍💻</div>
                             </div>
-                            <h4>Alex Chen</h4>
+                            <h4>Vitalik</h4>
                             <p class="hacker-role">Full-Stack Developer</p>
                             <p class="hacker-bio">Blockchain enthusiast with 5+ years in DeFi. Built the smart contract infrastructure and browser extension core.</p>
                             <div class="hacker-skills">
@@ -194,9 +194,9 @@
                             <div class="hacker-avatar">
                                 <div class="avatar-placeholder">👩‍💻</div>
                             </div>
-                            <h4>Sarah Williams</h4>
+                            <h4>Lya</h4>
                             <p class="hacker-role">Frontend Engineer</p>
-                            <p class="hacker-bio">UX/UI specialist focused on making crypto accessible. Designed the seamless payment flow and user interface.</p>
+                            <p class="hacker-bio">A UX/UI specialist dedicated to enhancing crypto accessibility through insightful marketing research and intuitive product design.</p>
                             <div class="hacker-skills">
                                 <span>React</span>
                                 <span>Extension APIs</span>
@@ -208,9 +208,9 @@
                             <div class="hacker-avatar">
                                 <div class="avatar-placeholder">🧑‍💻</div>
                             </div>
-                            <h4>Marcus Johnson</h4>
+                            <h4>Akuti</h4>
                             <p class="hacker-role">Backend Engineer</p>
-                            <p class="hacker-bio">Payment systems expert with fintech background. Architected the crypto-to-card conversion engine.</p>
+                            <p class="hacker-bio">Smart contract engineer. Architected the crypto-to-card conversion engine.</p>
                             <div class="hacker-skills">
                                 <span>Python</span>
                                 <span>Payment APIs</span>
