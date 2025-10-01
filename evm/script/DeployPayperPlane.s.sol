@@ -3,23 +3,26 @@ pragma solidity ^0.8.0;
 
 import {Script, console} from "forge-std/Script.sol";
 import {PayperPlane} from "../src/PayperPlane.sol";
+import {CREATE3} from "solady/utils/CREATE3.sol";
 
 /// @title DeployPayperPlane
 /// @notice Deployment script for the PayperPlane contract
 contract DeployPayperPlane is Script {
-    function run() external returns (PayperPlane) {
+    bytes32 public constant SALT = keccak256(abi.encodePacked(bytes("PayperPlane x Origins TOKEN2049 Hackathon")));
+    address public constant OWNER = 0x9cb048e45aAA295Ebb4a9b3dEcb05c529C4C6D88;
+
+
+    function run() external {
         // Get deployer private key from environment
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
         // Start broadcasting transactions
-        vm.startBroadcast(deployerPrivateKey);
-        PayperPlane payperPlane = new PayperPlane();
+        bytes memory initCode = abi.encodePacked(type(PayperPlane).creationCode, abi.encode(OWNER));
+        vm.startBroadcast();
+        address deployed = CREATE3.deployDeterministic(initCode, SALT);
         vm.stopBroadcast();
 
         // Log deployment info
-        console.log("Contract Address:", address(payperPlane));
-        console.log("Deployer Address:", vm.addr(deployerPrivateKey));
-
-        return payperPlane;
+        console.log("Contract Address:", deployed);
+        console.log("Deployer Address:", PayperPlane(deployed).owner());
     }
 }
