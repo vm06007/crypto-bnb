@@ -1,5 +1,5 @@
 // extension/content/content.ts
-class OnlyBnBInjector {
+class PayperPlaneInjector {
     observer = null;
     buttonInjected = false;
     checkoutDetected = false;
@@ -7,15 +7,15 @@ class OnlyBnBInjector {
         this.init();
     }
     init() {
-        console.log("[OnlyBnB] Extension initialized on:", window.location.href);
-        console.log("[OnlyBnB] Current URL pathname:", window.location.pathname);
-        console.log("[OnlyBnB] Is booking URL:", window.location.pathname.includes("/book/"));
+        console.log("[PayperPlane] Extension initialized on:", window.location.href);
+        console.log("[PayperPlane] Current URL pathname:", window.location.pathname);
+        console.log("[PayperPlane] Is booking URL:", window.location.pathname.includes("/book/"));
         this.injectWalletConnector();
         this.showTestIndicator();
         this.observePageChanges();
         this.checkForCheckoutPage();
         if (window.location.pathname.includes("/book/")) {
-            console.log("[OnlyBnB] On booking page, trying to inject toggle immediately...");
+            console.log("[PayperPlane] On booking page, trying to inject toggle immediately...");
             setTimeout(() => {
                 this.injectCryptoToggle();
             }, 1000);
@@ -25,17 +25,17 @@ class OnlyBnBInjector {
         }
         setInterval(() => {
             if (!this.buttonInjected) {
-                console.log("[OnlyBnB] Periodic check - button not injected yet");
+                console.log("[PayperPlane] Periodic check - button not injected yet");
                 this.checkForCheckoutPage();
             }
         }, 2000);
     }
     injectWalletConnector() {
-        console.log("[OnlyBnB] Injecting wallet connector script...");
+        console.log("[PayperPlane] Injecting wallet connector script...");
         const script = document.createElement("script");
         script.src = chrome.runtime.getURL("inject/wallet-connector.js");
         script.onload = () => {
-            console.log("[OnlyBnB] Wallet connector script injected successfully");
+            console.log("[PayperPlane] Wallet connector script injected successfully");
         };
         (document.head || document.documentElement).appendChild(script);
     }
@@ -52,7 +52,7 @@ class OnlyBnBInjector {
             z-index: 10000;
             font-weight: bold;
         `;
-        testElement.textContent = "OnlyBnB Extension Loaded!";
+        testElement.textContent = "PayperPlane Extension Loaded!";
         document.body.appendChild(testElement);
         setTimeout(() => {
             testElement.remove();
@@ -71,11 +71,11 @@ class OnlyBnBInjector {
     }
     checkForCheckoutPage() {
         const isBookingUrl = window.location.pathname.includes("/book/");
-        console.log("[OnlyBnB] Checking for checkout page...");
-        console.log("[OnlyBnB] Is booking URL:", isBookingUrl);
-        console.log("[OnlyBnB] Current URL:", window.location.href);
+        console.log("[PayperPlane] Checking for checkout page...");
+        console.log("[PayperPlane] Is booking URL:", isBookingUrl);
+        console.log("[PayperPlane] Current URL:", window.location.href);
         if (isBookingUrl) {
-            console.log("[OnlyBnB] Detected booking URL, looking for checkout elements...");
+            console.log("[PayperPlane] Detected booking URL, looking for checkout elements...");
         }
         const checkoutSelectors = [
             '[data-testid="book-it-default"]',
@@ -119,16 +119,16 @@ class OnlyBnBInjector {
             });
         }
         if (isCheckout && !this.buttonInjected) {
-            console.log("[OnlyBnB] Checkout detected, injecting crypto toggle...");
+            console.log("[PayperPlane] Checkout detected, injecting crypto toggle...");
             this.checkoutDetected = true;
             this.injectCryptoToggle();
             this.buttonInjected = true;
         }
     }
     injectCryptoToggle() {
-        console.log("[OnlyBnB] Creating custom crypto toggle...");
-        if (document.querySelector(".onlybnb-crypto-toggle") || document.querySelector('[data-onlybnb-crypto-toggle="true"]')) {
-            console.log("[OnlyBnB] Crypto toggle already exists");
+        console.log("[PayperPlane] Creating custom crypto toggle...");
+        if (document.querySelector(".payperplane-crypto-toggle") || document.querySelector('[data-payperplane-crypto-toggle="true"]')) {
+            console.log("[PayperPlane] Crypto toggle already exists");
             return;
         }
         const workTripSelectors = [
@@ -159,42 +159,42 @@ class OnlyBnBInjector {
                     workTripToggle = document.querySelector(selector);
                 }
                 if (workTripToggle) {
-                    console.log("[OnlyBnB] Found work trip toggle with selector:", selector);
+                    console.log("[PayperPlane] Found work trip toggle with selector:", selector);
                     break;
                 }
             } catch (e) {
-                console.debug("[OnlyBnB] Error with selector:", selector, e);
+                console.debug("[PayperPlane] Error with selector:", selector, e);
             }
         }
         if (!workTripToggle) {
-            console.log("[OnlyBnB] Work trip toggle not found with any selector");
-            console.log("[OnlyBnB] Available elements with data-plugin-in-point-id:", document.querySelectorAll("[data-plugin-in-point-id]"));
-            console.log('[OnlyBnB] Available elements containing "work trip":', document.querySelectorAll("*").length);
+            console.log("[PayperPlane] Work trip toggle not found with any selector");
+            console.log("[PayperPlane] Available elements with data-plugin-in-point-id:", document.querySelectorAll("[data-plugin-in-point-id]"));
+            console.log('[PayperPlane] Available elements containing "work trip":', document.querySelectorAll("*").length);
             const allElements = document.querySelectorAll("*");
             for (const el of allElements) {
                 if (el.textContent?.toLowerCase().includes("work trip")) {
-                    console.log('[OnlyBnB] Found element with "work trip" text:', el);
+                    console.log('[PayperPlane] Found element with "work trip" text:', el);
                     workTripToggle = el;
                     break;
                 }
             }
         }
         if (!workTripToggle) {
-            console.log("[OnlyBnB] Still no work trip toggle found, trying to inject at a different location...");
+            console.log("[PayperPlane] Still no work trip toggle found, trying to inject at a different location...");
             const anyToggle = document.querySelector('[role="switch"], [data-testid*="switch"], [class*="switch"]');
             if (anyToggle) {
-                console.log("[OnlyBnB] Found alternative toggle element:", anyToggle);
+                console.log("[PayperPlane] Found alternative toggle element:", anyToggle);
                 workTripToggle = anyToggle;
             } else {
-                console.log("[OnlyBnB] No suitable injection point found, trying fallback injection...");
+                console.log("[PayperPlane] No suitable injection point found, trying fallback injection...");
                 this.injectCryptoToggleFallback();
                 return;
             }
         }
-        console.log("[OnlyBnB] Found work trip toggle, creating custom crypto toggle...", workTripToggle);
+        console.log("[PayperPlane] Found work trip toggle, creating custom crypto toggle...", workTripToggle);
         const cryptoToggle = document.createElement("div");
-        cryptoToggle.className = "onlybnb-crypto-toggle";
-        cryptoToggle.setAttribute("data-onlybnb-crypto-toggle", "true");
+        cryptoToggle.className = "payperplane-crypto-toggle";
+        cryptoToggle.setAttribute("data-payperplane-crypto-toggle", "true");
         cryptoToggle.setAttribute("data-plugin-in-point-id", "SWITCH_ROW_CRYPTO");
         cryptoToggle.setAttribute("data-section-id", "SWITCH_ROW_CRYPTO");
         cryptoToggle.style.cssText = `
@@ -218,7 +218,7 @@ class OnlyBnBInjector {
             color: #222222;
         `;
         const toggleButton = document.createElement("button");
-        toggleButton.className = "onlybnb-crypto-switch";
+        toggleButton.className = "payperplane-crypto-switch";
         toggleButton.setAttribute("role", "switch");
         toggleButton.setAttribute("aria-checked", "false");
         toggleButton.setAttribute("aria-labelledby", "SWITCH_ROW_CRYPTO-title");
@@ -251,11 +251,11 @@ class OnlyBnBInjector {
         cryptoToggle.appendChild(toggleButton);
         workTripToggle.parentElement?.insertBefore(cryptoToggle, workTripToggle.nextSibling);
         this.setupToggleFunctionality(cryptoToggle);
-        console.log("[OnlyBnB] Custom crypto toggle added successfully");
+        console.log("[PayperPlane] Custom crypto toggle added successfully");
         this.showSuccessIndicator();
     }
     injectCryptoToggleFallback() {
-        console.log("[OnlyBnB] Using fallback injection method...");
+        console.log("[PayperPlane] Using fallback injection method...");
         const possibleInjectionPoints = [
             'div[class*="payment"]',
             'div[class*="checkout"]',
@@ -269,18 +269,18 @@ class OnlyBnBInjector {
         for (const selector of possibleInjectionPoints) {
             const element = document.querySelector(selector);
             if (element) {
-                console.log("[OnlyBnB] Found injection point with selector:", selector);
+                console.log("[PayperPlane] Found injection point with selector:", selector);
                 injectionPoint = element;
                 break;
             }
         }
         if (!injectionPoint) {
-            console.log("[OnlyBnB] No injection point found, injecting at body");
+            console.log("[PayperPlane] No injection point found, injecting at body");
             injectionPoint = document.body;
         }
         const cryptoToggle = document.createElement("div");
-        cryptoToggle.className = "onlybnb-crypto-toggle";
-        cryptoToggle.setAttribute("data-onlybnb-crypto-toggle", "true");
+        cryptoToggle.className = "payperplane-crypto-toggle";
+        cryptoToggle.setAttribute("data-payperplane-crypto-toggle", "true");
         cryptoToggle.style.cssText = `
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -298,7 +298,7 @@ class OnlyBnBInjector {
                     <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">Secure BNB payment</p>
                 </div>
             </div>
-            <button id="onlybnb-crypto-toggle-button" style="
+            <button id="payperplane-crypto-toggle-button" style="
                 width: 100%;
                 background: #F0B90B;
                 color: #000;
@@ -316,16 +316,16 @@ class OnlyBnBInjector {
         } else {
             injectionPoint.insertBefore(cryptoToggle, injectionPoint.firstChild);
         }
-        const toggleButton = cryptoToggle.querySelector("#onlybnb-crypto-toggle-button");
+        const toggleButton = cryptoToggle.querySelector("#payperplane-crypto-toggle-button");
         toggleButton.addEventListener("click", async () => {
             try {
                 await this.connectWallet();
-                console.log("[OnlyBnB] Wallet connected via fallback method");
+                console.log("[PayperPlane] Wallet connected via fallback method");
                 toggleButton.textContent = "Wallet Connected \u2713";
                 toggleButton.style.background = "#4CAF50";
                 toggleButton.style.color = "white";
             } catch (error) {
-                console.error("[OnlyBnB] Wallet connection failed:", error);
+                console.error("[PayperPlane] Wallet connection failed:", error);
                 toggleButton.textContent = "Connection Failed";
                 toggleButton.style.background = "#f44336";
                 toggleButton.style.color = "white";
@@ -336,12 +336,12 @@ class OnlyBnBInjector {
                 }, 3000);
             }
         });
-        console.log("[OnlyBnB] Fallback crypto toggle added successfully");
+        console.log("[PayperPlane] Fallback crypto toggle added successfully");
         this.showSuccessIndicator();
     }
     setupToggleFunctionality(cryptoToggle) {
-        const toggleButton = cryptoToggle.querySelector(".onlybnb-crypto-switch");
-        const toggleKnob = cryptoToggle.querySelector(".onlybnb-crypto-switch > div");
+        const toggleButton = cryptoToggle.querySelector(".payperplane-crypto-switch");
+        const toggleKnob = cryptoToggle.querySelector(".payperplane-crypto-switch > div");
         let isCryptoEnabled = false;
         let originalPaymentSection = null;
         const updateToggle = async (enabled) => {
@@ -426,7 +426,7 @@ class OnlyBnBInjector {
                     }
                 }
             } catch (e) {
-                console.debug("[OnlyBnB] Error with selector:", selector, e);
+                console.debug("[PayperPlane] Error with selector:", selector, e);
             }
         }
         return null;
@@ -451,7 +451,7 @@ class OnlyBnBInjector {
         }, 3000);
     }
     hideQuickPayTerms() {
-        console.log("[OnlyBnB] Hiding quick-pay terms and conditions...");
+        console.log("[PayperPlane] Hiding quick-pay terms and conditions...");
         const termsSelectors = [
             "#quick-pay-terms-and-conditions",
             '[id="quick-pay-terms-and-conditions"]',
@@ -472,80 +472,80 @@ class OnlyBnBInjector {
                         if (found) {
                             const element = found;
                             element.style.display = "none";
-                            element.setAttribute("data-onlybnb-hidden", "true");
-                            console.log("[OnlyBnB] Hidden quick-pay terms:", element);
+                            element.setAttribute("data-payperplane-hidden", "true");
+                            console.log("[PayperPlane] Hidden quick-pay terms:", element);
                         }
                     }
                 } else {
                     const element = document.querySelector(selector);
                     if (element) {
                         element.style.display = "none";
-                        element.setAttribute("data-onlybnb-hidden", "true");
-                        console.log("[OnlyBnB] Hidden quick-pay terms:", element);
+                        element.setAttribute("data-payperplane-hidden", "true");
+                        console.log("[PayperPlane] Hidden quick-pay terms:", element);
                     }
                 }
             } catch (e) {
-                console.debug("[OnlyBnB] Error with terms selector:", selector, e);
+                console.debug("[PayperPlane] Error with terms selector:", selector, e);
             }
         }
     }
     showQuickPayTerms() {
-        console.log("[OnlyBnB] Showing quick-pay terms and conditions...");
-        const hiddenElements = document.querySelectorAll('[data-onlybnb-hidden="true"]');
+        console.log("[PayperPlane] Showing quick-pay terms and conditions...");
+        const hiddenElements = document.querySelectorAll('[data-payperplane-hidden="true"]');
         hiddenElements.forEach((element) => {
             const htmlElement = element;
             htmlElement.style.display = "";
-            htmlElement.removeAttribute("data-onlybnb-hidden");
-            console.log("[OnlyBnB] Shown quick-pay terms:", htmlElement);
+            htmlElement.removeAttribute("data-payperplane-hidden");
+            console.log("[PayperPlane] Shown quick-pay terms:", htmlElement);
         });
     }
     ensureOriginalButtonHidden() {
         if (this.originalConfirmPayButton) {
-            console.log("[OnlyBnB] Ensuring original button stays hidden...");
+            console.log("[PayperPlane] Ensuring original button stays hidden...");
             this.originalConfirmPayButton.style.display = "none";
-            this.originalConfirmPayButton.setAttribute("data-onlybnb-hidden", "true");
+            this.originalConfirmPayButton.setAttribute("data-payperplane-hidden", "true");
         }
     }
     async checkWalletConnection() {
         try {
             if (!window.ethereum) {
-                console.log("[OnlyBnB] No window.ethereum found for connection check");
+                console.log("[PayperPlane] No window.ethereum found for connection check");
                 return false;
             }
-            console.log("[OnlyBnB] Using window.ethereum directly for connection check");
+            console.log("[PayperPlane] Using window.ethereum directly for connection check");
             const accounts = await window.ethereum.request({ method: "eth_accounts" });
             const isConnected = accounts && accounts.length > 0;
-            console.log("[OnlyBnB] Wallet connection status:", isConnected);
-            console.log("[OnlyBnB] Connected accounts:", accounts);
+            console.log("[PayperPlane] Wallet connection status:", isConnected);
+            console.log("[PayperPlane] Connected accounts:", accounts);
             return isConnected;
         } catch (error) {
-            console.log("[OnlyBnB] Wallet connection check failed:", error);
+            console.log("[PayperPlane] Wallet connection check failed:", error);
             return false;
         }
     }
     async waitForEthereum(timeout = 3000) {
-        console.log("[OnlyBnB] Checking for ethereum provider...");
-        console.log("[OnlyBnB] window.ethereum exists:", !!window.ethereum);
-        console.log("[OnlyBnB] window.ethereum type:", typeof window.ethereum);
-        console.log("[OnlyBnB] window.ethereum value:", window.ethereum);
+        console.log("[PayperPlane] Checking for ethereum provider...");
+        console.log("[PayperPlane] window.ethereum exists:", !!window.ethereum);
+        console.log("[PayperPlane] window.ethereum type:", typeof window.ethereum);
+        console.log("[PayperPlane] window.ethereum value:", window.ethereum);
         if (window.ethereum) {
-            console.log("[OnlyBnB] Ethereum provider found immediately");
+            console.log("[PayperPlane] Ethereum provider found immediately");
             return window.ethereum;
         }
-        console.log("[OnlyBnB] Waiting for ethereum provider...");
+        console.log("[PayperPlane] Waiting for ethereum provider...");
         let attempts = 0;
         const maxAttempts = timeout / 100;
         return new Promise((resolve) => {
             const checkEthereum = () => {
                 attempts++;
-                console.log("[OnlyBnB] Attempt", attempts, "- window.ethereum exists:", !!window.ethereum);
+                console.log("[PayperPlane] Attempt", attempts, "- window.ethereum exists:", !!window.ethereum);
                 if (window.ethereum) {
-                    console.log("[OnlyBnB] Ethereum provider found after", attempts * 100, "ms");
+                    console.log("[PayperPlane] Ethereum provider found after", attempts * 100, "ms");
                     resolve(window.ethereum);
                     return;
                 }
                 if (attempts >= maxAttempts) {
-                    console.log("[OnlyBnB] Timeout waiting for ethereum provider after", attempts * 100, "ms");
+                    console.log("[PayperPlane] Timeout waiting for ethereum provider after", attempts * 100, "ms");
                     resolve(null);
                     return;
                 }
@@ -556,15 +556,15 @@ class OnlyBnBInjector {
     }
     connectedAccount = null;
     async connectWallet() {
-        console.log("[OnlyBnB] Attempting to connect wallet via custom events...");
+        console.log("[PayperPlane] Attempting to connect wallet via custom events...");
         return new Promise((resolve, reject) => {
             const handleResponse = (event) => {
-                console.log("[OnlyBnB] Received wallet response:", event.detail);
-                window.removeEventListener("onlybnb-wallet-response", handleResponse);
+                console.log("[PayperPlane] Received wallet response:", event.detail);
+                window.removeEventListener("payperplane-wallet-response", handleResponse);
                 if (event.detail.success) {
-                    console.log("[OnlyBnB] Wallet connected successfully!");
-                    console.log("[OnlyBnB] Account:", event.detail.account);
-                    console.log("[OnlyBnB] Chain ID:", event.detail.chainId);
+                    console.log("[PayperPlane] Wallet connected successfully!");
+                    console.log("[PayperPlane] Account:", event.detail.account);
+                    console.log("[PayperPlane] Chain ID:", event.detail.chainId);
                     this.connectedAccount = event.detail.account;
                     if (event.detail.chainId !== "0x38") {
                         this.switchToBSCNetwork().then(() => resolve()).catch(reject);
@@ -572,61 +572,61 @@ class OnlyBnBInjector {
                         resolve();
                     }
                 } else {
-                    console.error("[OnlyBnB] Wallet connection failed:", event.detail.error);
+                    console.error("[PayperPlane] Wallet connection failed:", event.detail.error);
                     reject(new Error(event.detail.error));
                 }
             };
-            window.addEventListener("onlybnb-wallet-response", handleResponse);
-            console.log("[OnlyBnB] Dispatching wallet connection request...");
-            window.dispatchEvent(new CustomEvent("onlybnb-connect-wallet"));
+            window.addEventListener("payperplane-wallet-response", handleResponse);
+            console.log("[PayperPlane] Dispatching wallet connection request...");
+            window.dispatchEvent(new CustomEvent("payperplane-connect-wallet"));
             setTimeout(() => {
-                window.removeEventListener("onlybnb-wallet-response", handleResponse);
+                window.removeEventListener("payperplane-wallet-response", handleResponse);
                 reject(new Error("Wallet connection timeout"));
             }, 30000);
         });
     }
     async switchToBSCNetwork() {
-        console.log("[OnlyBnB] Attempting to switch to BSC network...");
+        console.log("[PayperPlane] Attempting to switch to BSC network...");
         return new Promise((resolve, reject) => {
             const handleResponse = (event) => {
-                console.log("[OnlyBnB] Received network switch response:", event.detail);
-                window.removeEventListener("onlybnb-network-response", handleResponse);
+                console.log("[PayperPlane] Received network switch response:", event.detail);
+                window.removeEventListener("payperplane-network-response", handleResponse);
                 if (event.detail.success) {
-                    console.log("[OnlyBnB] Network switch successful:", event.detail.message);
+                    console.log("[PayperPlane] Network switch successful:", event.detail.message);
                     resolve();
                 } else {
-                    console.error("[OnlyBnB] Network switch failed:", event.detail.error);
+                    console.error("[PayperPlane] Network switch failed:", event.detail.error);
                     resolve();
                 }
             };
-            window.addEventListener("onlybnb-network-response", handleResponse);
-            console.log("[OnlyBnB] Dispatching network switch request...");
-            window.dispatchEvent(new CustomEvent("onlybnb-switch-network"));
+            window.addEventListener("payperplane-network-response", handleResponse);
+            console.log("[PayperPlane] Dispatching network switch request...");
+            window.dispatchEvent(new CustomEvent("payperplane-switch-network"));
             setTimeout(() => {
-                window.removeEventListener("onlybnb-network-response", handleResponse);
-                console.warn("[OnlyBnB] Network switch timeout - continuing anyway");
+                window.removeEventListener("payperplane-network-response", handleResponse);
+                console.warn("[PayperPlane] Network switch timeout - continuing anyway");
                 resolve();
             }, 1e4);
         });
     }
     async fetchTokenBalances() {
-        console.log("[OnlyBnB] Fetching token balances...");
+        console.log("[PayperPlane] Fetching token balances...");
         return new Promise((resolve, reject) => {
             const handleResponse = (event) => {
-                console.log("[OnlyBnB] Received balances response:", event.detail);
-                window.removeEventListener("onlybnb-balances-response", handleResponse);
+                console.log("[PayperPlane] Received balances response:", event.detail);
+                window.removeEventListener("payperplane-balances-response", handleResponse);
                 if (event.detail.success) {
                     resolve(event.detail.balances);
                 } else {
-                    console.error("[OnlyBnB] Balance fetch failed:", event.detail.error);
+                    console.error("[PayperPlane] Balance fetch failed:", event.detail.error);
                     resolve({ BNB: "0.0000", ETH: "0.0000", USDT: "0.0000", USDC: "0.0000" });
                 }
             };
-            window.addEventListener("onlybnb-balances-response", handleResponse);
-            console.log("[OnlyBnB] Dispatching balance fetch request...");
-            window.dispatchEvent(new CustomEvent("onlybnb-fetch-balances"));
+            window.addEventListener("payperplane-balances-response", handleResponse);
+            console.log("[PayperPlane] Dispatching balance fetch request...");
+            window.dispatchEvent(new CustomEvent("payperplane-fetch-balances"));
             setTimeout(() => {
-                window.removeEventListener("onlybnb-balances-response", handleResponse);
+                window.removeEventListener("payperplane-balances-response", handleResponse);
                 resolve({ BNB: "0.0000", ETH: "0.0000", USDT: "0.0000", USDC: "0.0000" });
             }, 5000);
         });
@@ -664,55 +664,55 @@ class OnlyBnBInjector {
                     }
                 }
                 if (confirmButton) {
-                    console.log("[OnlyBnB] Found confirm button with selector:", selector);
+                    console.log("[PayperPlane] Found confirm button with selector:", selector);
                     break;
                 }
             } catch (e) {
-                console.debug("[OnlyBnB] Error with selector:", selector, e);
+                console.debug("[PayperPlane] Error with selector:", selector, e);
             }
         }
         if (!confirmButton) {
-            console.log("[OnlyBnB] Confirm and pay button not found yet");
+            console.log("[PayperPlane] Confirm and pay button not found yet");
             return;
         }
-        console.log("[OnlyBnB] Found Confirm and pay button, replacing...");
+        console.log("[PayperPlane] Found Confirm and pay button, replacing...");
         this.originalConfirmPayButton = confirmButton;
         confirmButton.style.display = "none";
-        confirmButton.setAttribute("data-onlybnb-hidden", "true");
+        confirmButton.setAttribute("data-payperplane-hidden", "true");
         this.payButtonReplaced = true;
-        console.log("[OnlyBnB] Confirm and pay button replaced with crypto button");
+        console.log("[PayperPlane] Confirm and pay button replaced with crypto button");
     }
     restoreConfirmPayButton() {
         if (!this.payButtonReplaced || !this.originalConfirmPayButton || !this.cryptoPayButton) {
             return;
         }
-        console.log("[OnlyBnB] Restoring original confirm and pay button...");
+        console.log("[PayperPlane] Restoring original confirm and pay button...");
         this.originalConfirmPayButton.style.display = "";
         this.cryptoPayButton.remove();
         this.cryptoPayButton = null;
         this.payButtonReplaced = false;
-        console.log("[OnlyBnB] Original button restored");
+        console.log("[PayperPlane] Original button restored");
     }
     async handleCryptoPayment() {
-        console.log("[OnlyBnB] Starting crypto payment flow...");
+        console.log("[PayperPlane] Starting crypto payment flow...");
         try {
             const isConnected = await this.checkWalletConnection();
             if (!isConnected) {
-                console.log("[OnlyBnB] Wallet not connected, connecting...");
+                console.log("[PayperPlane] Wallet not connected, connecting...");
                 await this.connectWallet();
             }
             const calculation = await this.calculateBNBAmount();
-            console.log("[OnlyBnB] Payment calculation:", calculation);
+            console.log("[PayperPlane] Payment calculation:", calculation);
             if (!this.connectedAccount) {
                 const accounts = await new Promise((resolve) => {
-                    window.addEventListener("onlybnb-wallet-response", (event) => {
+                    window.addEventListener("payperplane-wallet-response", (event) => {
                         if (event.detail.success) {
                             resolve([event.detail.account]);
                         } else {
                             resolve([]);
                         }
                     }, { once: true });
-                    window.dispatchEvent(new CustomEvent("onlybnb-connect-wallet"));
+                    window.dispatchEvent(new CustomEvent("payperplane-connect-wallet"));
                 });
                 if (accounts.length > 0) {
                     this.connectedAccount = accounts[0];
@@ -723,22 +723,22 @@ class OnlyBnBInjector {
             const treasuryAddress = "0xa803c226c8281550454523191375695928DcFE92";
             const bnbAsNumber = parseFloat(calculation.bnbAmount);
             const weiAmount = BigInt(Math.floor(bnbAsNumber * Math.pow(10, 18)));
-            console.log("[OnlyBnB] Sending transaction:", {
+            console.log("[PayperPlane] Sending transaction:", {
                 from: this.connectedAccount,
                 to: treasuryAddress,
                 value: weiAmount.toString()
             });
             const txHash = await new Promise((resolve, reject) => {
                 const handleResponse = (event) => {
-                    window.removeEventListener("onlybnb-transaction-response", handleResponse);
+                    window.removeEventListener("payperplane-transaction-response", handleResponse);
                     if (event.detail.success) {
                         resolve(event.detail.txHash);
                     } else {
                         reject(new Error(event.detail.error || "Transaction failed"));
                     }
                 };
-                window.addEventListener("onlybnb-transaction-response", handleResponse);
-                window.dispatchEvent(new CustomEvent("onlybnb-send-transaction", {
+                window.addEventListener("payperplane-transaction-response", handleResponse);
+                window.dispatchEvent(new CustomEvent("payperplane-send-transaction", {
                     detail: {
                         from: this.connectedAccount,
                         to: treasuryAddress,
@@ -747,11 +747,11 @@ class OnlyBnBInjector {
                     }
                 }));
                 setTimeout(() => {
-                    window.removeEventListener("onlybnb-transaction-response", handleResponse);
+                    window.removeEventListener("payperplane-transaction-response", handleResponse);
                     reject(new Error("Transaction timeout"));
                 }, 60000);
             });
-            console.log("[OnlyBnB] Transaction sent:", txHash);
+            console.log("[PayperPlane] Transaction sent:", txHash);
             const processingMessage = document.createElement("div");
             processingMessage.style.cssText = `
                 position: fixed;
@@ -772,7 +772,7 @@ class OnlyBnBInjector {
             `;
             document.body.appendChild(processingMessage);
             setTimeout(() => {
-                console.log("[OnlyBnB] Simulating transaction confirmation...");
+                console.log("[PayperPlane] Simulating transaction confirmation...");
                 processingMessage.innerHTML = "\u2713 Transaction confirmed!<br><small>Processing payment...</small>";
                 processingMessage.style.background = "#FF9800";
                 setTimeout(() => {
@@ -794,7 +794,7 @@ class OnlyBnBInjector {
                     document.body.appendChild(successMessage);
                     setTimeout(() => {
                         if (this.originalConfirmPayButton) {
-                            console.log("[OnlyBnB] Clicking original Airbnb button...");
+                            console.log("[PayperPlane] Clicking original Airbnb button...");
                             this.originalConfirmPayButton.click();
                         }
                         successMessage.remove();
@@ -802,7 +802,7 @@ class OnlyBnBInjector {
                 }, 2000);
             }, 3000);
         } catch (error) {
-            console.error("[OnlyBnB] Crypto payment failed:", error);
+            console.error("[PayperPlane] Crypto payment failed:", error);
             alert("Payment failed: " + error.message);
         }
     }
@@ -819,7 +819,7 @@ class OnlyBnBInjector {
             paymentSection.dataset.originalContent = paymentSection.innerHTML;
         }
         const cryptoSection = document.createElement("div");
-        cryptoSection.className = "onlybnb-crypto-payment";
+        cryptoSection.className = "payperplane-crypto-payment";
         cryptoSection.style.cssText = `
             background: white;
             border-radius: 8px;
@@ -832,7 +832,7 @@ class OnlyBnBInjector {
         }
         paymentSection.innerHTML = "";
         paymentSection.appendChild(cryptoSection);
-        console.log("[OnlyBnB] Crypto payment options shown");
+        console.log("[PayperPlane] Crypto payment options shown");
     }
     createWalletConnectionPrompt(container) {
         const promptSection = document.createElement("div");
@@ -888,19 +888,19 @@ class OnlyBnBInjector {
         connectButton.addEventListener("click", async (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log("[OnlyBnB] Connect button clicked!");
+            console.log("[PayperPlane] Connect button clicked!");
             connectButton.disabled = true;
             connectButton.textContent = "Connecting...";
             connectButton.style.background = "#ccc";
             try {
-                console.log("[OnlyBnB] Starting wallet connection process...");
-                console.log("[OnlyBnB] Window.ethereum available?", !!window.ethereum);
+                console.log("[PayperPlane] Starting wallet connection process...");
+                console.log("[PayperPlane] Window.ethereum available?", !!window.ethereum);
                 await this.connectWallet();
-                console.log("[OnlyBnB] Wallet connected successfully, refreshing UI...");
+                console.log("[PayperPlane] Wallet connected successfully, refreshing UI...");
                 container.innerHTML = "";
                 this.createConnectedWalletUI(container);
             } catch (error) {
-                console.error("[OnlyBnB] Wallet connection failed:", error);
+                console.error("[PayperPlane] Wallet connection failed:", error);
                 connectButton.disabled = false;
                 connectButton.textContent = "Connect MetaMask";
                 connectButton.style.background = "#F6851B";
@@ -954,7 +954,7 @@ class OnlyBnBInjector {
         container.appendChild(promptSection);
     }
     createConnectedWalletUI(container) {
-        console.log("[OnlyBnB] Creating connected wallet UI...");
+        console.log("[PayperPlane] Creating connected wallet UI...");
         const header = document.createElement("div");
         header.style.cssText = `
             display: flex;
@@ -1021,7 +1021,7 @@ class OnlyBnBInjector {
             });
         }
         const tokenDropdown = document.createElement("div");
-        tokenDropdown.className = "onlybnb-token-dropdown";
+        tokenDropdown.className = "payperplane-token-dropdown";
         tokenDropdown.style.cssText = `
             border: 1px solid #e0e0e0;
             border-radius: 8px;
@@ -1076,12 +1076,12 @@ class OnlyBnBInjector {
                     }
                 }
             }).catch((error) => {
-                console.error("[OnlyBnB] Failed to fetch balances:", error);
+                console.error("[PayperPlane] Failed to fetch balances:", error);
                 const needsText = `Needs: ${calculation.bnbAmount} BNB`;
                 tokenBalance.textContent = needsText;
             });
         }).catch((error) => {
-            console.error("[OnlyBnB] Failed to calculate BNB amount:", error);
+            console.error("[PayperPlane] Failed to calculate BNB amount:", error);
             tokenBalance.textContent = "Needs: 0.2084 BNB (Fallback)";
             this.fetchTokenBalances().then((balances2) => {
                 const balanceText = `Balance: ${balances2.BNB} BNB`;
@@ -1092,7 +1092,7 @@ class OnlyBnBInjector {
             });
         });
         const tokenOptions = document.createElement("div");
-        tokenOptions.className = "onlybnb-token-options";
+        tokenOptions.className = "payperplane-token-options";
         tokenOptions.style.cssText = `
             display: none;
             position: absolute;
@@ -1124,7 +1124,7 @@ class OnlyBnBInjector {
         });
         tokens.forEach((token) => {
             const option = document.createElement("div");
-            option.className = "onlybnb-token-option";
+            option.className = "payperplane-token-option";
             option.style.cssText = `
                 padding: 12px;
                 cursor: ${token.enabled ? "pointer" : "not-allowed"};
@@ -1216,7 +1216,7 @@ class OnlyBnBInjector {
             dropdownArrow.textContent = "\u25BC";
         });
         const paymentSummary = document.createElement("div");
-        paymentSummary.className = "onlybnb-payment-summary";
+        paymentSummary.className = "payperplane-payment-summary";
         paymentSummary.style.cssText = `
             background: #f8f9fa;
             border-radius: 8px;
@@ -1250,7 +1250,7 @@ class OnlyBnBInjector {
                 `;
                 }
             }).catch((error) => {
-                console.error("[OnlyBnB] Failed to calculate payment summary:", error);
+                console.error("[PayperPlane] Failed to calculate payment summary:", error);
                 const summaryElement = paymentSummary.querySelector("#payment-calculation");
                 if (summaryElement) {
                     summaryElement.innerHTML = `
@@ -1269,7 +1269,7 @@ class OnlyBnBInjector {
                 `;
                 }
             }).catch((error) => {
-                console.error("[OnlyBnB] Failed to calculate payment summary:", error);
+                console.error("[PayperPlane] Failed to calculate payment summary:", error);
                 const summaryElement = paymentSummary.querySelector("#payment-calculation");
                 if (summaryElement) {
                     summaryElement.innerHTML = `
@@ -1315,7 +1315,7 @@ class OnlyBnBInjector {
             try {
                 await this.handleCryptoPayment();
             } catch (error) {
-                console.error("[OnlyBnB] Payment failed:", error);
+                console.error("[PayperPlane] Payment failed:", error);
                 payButton.disabled = false;
                 payButton.innerHTML = `
                     <span style="font-size: 20px;">\u20BF</span>
@@ -1334,33 +1334,33 @@ class OnlyBnBInjector {
         if (paymentSection.dataset.originalContent) {
             paymentSection.innerHTML = paymentSection.dataset.originalContent;
         }
-        console.log("[OnlyBnB] Crypto payment options hidden, original payment section restored");
+        console.log("[PayperPlane] Crypto payment options hidden, original payment section restored");
     }
     async fetchBNBPrice() {
-        console.log("[OnlyBnB] Fetching BNB price...");
+        console.log("[PayperPlane] Fetching BNB price...");
         return new Promise((resolve, reject) => {
             const handleResponse = (event) => {
-                console.log("[OnlyBnB] Received BNB price response:", event.detail);
-                window.removeEventListener("onlybnb-price-response", handleResponse);
+                console.log("[PayperPlane] Received BNB price response:", event.detail);
+                window.removeEventListener("payperplane-price-response", handleResponse);
                 if (event.detail.success) {
                     resolve(event.detail.prices);
                 } else {
-                    console.error("[OnlyBnB] BNB price fetch failed, using fallback:", event.detail.error);
+                    console.error("[PayperPlane] BNB price fetch failed, using fallback:", event.detail.error);
                     resolve(event.detail.prices);
                 }
             };
-            window.addEventListener("onlybnb-price-response", handleResponse);
-            console.log("[OnlyBnB] Dispatching BNB price fetch request...");
-            window.dispatchEvent(new CustomEvent("onlybnb-fetch-bnb-price"));
+            window.addEventListener("payperplane-price-response", handleResponse);
+            console.log("[PayperPlane] Dispatching BNB price fetch request...");
+            window.dispatchEvent(new CustomEvent("payperplane-fetch-bnb-price"));
             setTimeout(() => {
-                window.removeEventListener("onlybnb-price-response", handleResponse);
-                console.log("[OnlyBnB] BNB price fetch timeout, using fallback prices");
+                window.removeEventListener("payperplane-price-response", handleResponse);
+                console.log("[PayperPlane] BNB price fetch timeout, using fallback prices");
                 resolve({ usd: 600, sgd: 810 });
             }, 3000);
         });
     }
     extractTotalPrice() {
-        console.log("[OnlyBnB] Extracting booking price from page...");
+        console.log("[PayperPlane] Extracting booking price from page...");
         const priceSelectors = [
             '[data-testid="book-it-default"] span:contains("Total")',
             '[data-testid="book-it-default"] div:contains("SGD")',
@@ -1399,18 +1399,18 @@ class OnlyBnBInjector {
                 currency = fallbackMatch[2] || "SGD";
             }
         }
-        console.log("[OnlyBnB] Extracted price:", totalPrice, currency);
+        console.log("[PayperPlane] Extracted price:", totalPrice, currency);
         return { amount: totalPrice || 125.12, currency: currency.toUpperCase() };
     }
     async calculateBNBAmount() {
         try {
             const totalPrice = this.extractTotalPrice();
-            console.log("[OnlyBnB] Total booking price:", totalPrice);
+            console.log("[PayperPlane] Total booking price:", totalPrice);
             const bnbPrices = await this.fetchBNBPrice();
-            console.log("[OnlyBnB] BNB prices:", bnbPrices);
+            console.log("[PayperPlane] BNB prices:", bnbPrices);
             const exchangeRate = totalPrice.currency === "SGD" ? bnbPrices.sgd : bnbPrices.usd;
             const bnbAmount = (totalPrice.amount / exchangeRate).toFixed(6);
-            console.log("[OnlyBnB] Calculated BNB amount:", {
+            console.log("[PayperPlane] Calculated BNB amount:", {
                 totalPrice,
                 exchangeRate,
                 bnbAmount
@@ -1421,7 +1421,7 @@ class OnlyBnBInjector {
                 totalPrice
             };
         } catch (error) {
-            console.error("[OnlyBnB] Error calculating BNB amount:", error);
+            console.error("[PayperPlane] Error calculating BNB amount:", error);
             return {
                 bnbAmount: "0.2084",
                 exchangeRate: 600,
@@ -1471,14 +1471,14 @@ window.addEventListener("beforeunload", () => {
 });
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
-        injector = new OnlyBnBInjector;
+        injector = new PayperPlaneInjector;
     });
 } else {
-    injector = new OnlyBnBInjector;
+    injector = new PayperPlaneInjector;
 }
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === "PAYMENT_COMPLETE" || request.type === "PAYMENT_CONFIRMED") {
-        console.log("[OnlyBnB] Payment completed successfully");
+        console.log("[PayperPlane] Payment completed successfully");
         const successMessage = document.createElement("div");
         successMessage.style.cssText = `
             position: fixed;

@@ -7,7 +7,7 @@ async function buildExtension() {
     const rootDir = import.meta.dir;
     const distDir = join(rootDir, 'dist/extension');
 
-    console.log('🏗️  Building OnlyBnB extension...');
+    console.log('🏗️  Building PayperPlane extension...');
 
     // Clean dist directory
     if (existsSync(distDir)) {

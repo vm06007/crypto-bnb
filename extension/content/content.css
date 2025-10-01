@@ -1,6 +1,6 @@
 /* OnlyBnB Content Script Styles */
 
-.onlybnb-payment-option {
+.payperplane-payment-option {
     animation: slideIn 0.3s ease-out;
 }
 
@@ -15,22 +15,22 @@
     }
 }
 
-.onlybnb-pay-button:hover {
+.payperplane-pay-button:hover {
     background: #E5A50A !important;
     transform: scale(1.02);
 }
 
-.onlybnb-pay-button:active {
+.payperplane-pay-button:active {
     transform: scale(0.98);
 }
 
-.onlybnb-pay-button:disabled {
+.payperplane-pay-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
 /* Spinner for loading state */
-.onlybnb-spinner {
+.payperplane-spinner {
     display: inline-block;
     width: 20px;
     height: 20px;
@@ -45,14 +45,14 @@
 }
 
 /* Success checkmark animation */
-.onlybnb-success-check {
+.payperplane-success-check {
     width: 24px;
     height: 24px;
     display: inline-block;
     position: relative;
 }
 
-.onlybnb-success-check::after {
+.payperplane-success-check::after {
     content: '✓';
     position: absolute;
     top: 50%;
@@ -76,12 +76,12 @@
 }
 
 /* Override Airbnb styles if needed */
-.onlybnb-payment-option * {
+.payperplane-payment-option * {
     box-sizing: border-box;
 }
 
 /* Ensure our button doesn't inherit unwanted styles */
-.onlybnb-pay-button {
+.payperplane-pay-button {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -91,24 +91,24 @@
 
 /* Mobile responsive */
 @media (max-width: 768px) {
-    .onlybnb-payment-option {
+    .payperplane-payment-option {
         margin: 12px 0;
         padding: 12px;
     }
 
-    .onlybnb-pay-button {
+    .payperplane-pay-button {
         padding: 12px 20px;
         font-size: 15px;
     }
 }
 
 /* Styles for injected payment option in dropdown */
-.onlybnb-payment-option-menu {
+.payperplane-payment-option-menu {
     position: relative;
     background-color: white !important;
 }
 
-.onlybnb-payment-option-menu::before {
+.payperplane-payment-option-menu::before {
     content: '💰';
     position: absolute;
     left: 16px;
@@ -117,12 +117,12 @@
     font-size: 20px;
 }
 
-.onlybnb-payment-option-menu[data-onlybnb="true"] {
+.payperplane-payment-option-menu[data-payperplane="true"] {
     padding-left: 48px !important;
 }
 
 /* Highlight on hover */
-.onlybnb-payment-option-menu:hover {
+.payperplane-payment-option-menu:hover {
     background-color: #FFF8E7 !important;
 }
 
