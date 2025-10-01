@@ -20,7 +20,7 @@
 
                 // Add connecting animation
                 const originalText = this.innerHTML;
-                this.innerHTML = '<span style="animation: spin 1s linear infinite; display: inline-block;">⟳</span> Connecting...';
+                this.innerHTML = '<div class="random-spinner" style="width: 16px; height: 16px; margin-right: 8px; display: inline-block; vertical-align: middle;"></div> Connecting...';
                 this.disabled = true;
 
                 setTimeout(() => {
@@ -52,7 +52,7 @@
 
                 // Add processing animation
                 const originalText = this.innerHTML;
-                this.innerHTML = '<span style="animation: spin 1s linear infinite; display: inline-block;">⟳</span> Processing...';
+                this.innerHTML = '<div class="random-spinner" style="width: 16px; height: 16px; margin-right: 8px; display: inline-block; vertical-align: middle;"></div> Processing...';
                 this.disabled = true;
 
                 setTimeout(() => {
@@ -139,6 +139,41 @@
             @keyframes spin {
                 from { transform: rotate(0deg); }
                 to { transform: rotate(360deg); }
+            }
+
+            @keyframes rotate {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            .random-spinner {
+                position: relative;
+                border-top: 3px solid #4DB3C1;
+                border-bottom: 0;
+                border-left: 3px solid #4DB3C1;
+                border-right: 3px solid transparent;
+                animation: rotate 1.5s linear infinite;
+                height: 54px;
+                width: 54px;
+                border-radius: 50%;
+                box-sizing: border-box;
+            }
+
+            .random-spinner:before {
+                content: '';
+                background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 11.6C20 10.96 19.44 10.4 18.8 10.4H14.4L10.4 4H8.8L10.8 10.4H6.4L5.2 8.8H4L4.8 11.6L4 14.4H5.2L6.4 12.8H10.8L8.8 19.2H10.4L14.4 12.8H18.8C19.44 12.8 20 12.24 20 11.6Z' fill='black'/%3E%3C/svg%3E%0A");
+                display: block;
+                background-size: 55%;
+                background-repeat: no-repeat;
+                background-position: center;
+                position: absolute;
+                z-index: 999;
+                top: 50%;
+                left: 50%;
+                width: 100%;
+                height: 100%;
+                transform: translate(-50%, -50%) rotate(41deg);
             }
 
             .hidden {
