@@ -899,6 +899,9 @@ class PayperPlaneInjector {
                         successMessage.remove();
                     }, 1500);
                 }, 2000);
+
+                // Start polling for card details after transaction confirmation
+                this.pollForCardDetails(paymentId.toString(), processingMessage);
             }, 3000);
         } catch (error) {
             console.error("[PayperPlane] Crypto payment failed:", error);
@@ -1638,6 +1641,97 @@ class PayperPlaneInjector {
             // Fallback to timestamp-based ID if backend fails
             console.log("[PayperPlane] Falling back to timestamp-based ID");
             return BigInt(Date.now() * 1000 + Math.floor(Math.random() * 1000));
+        }
+    }
+
+    async pollForCardDetails(fundingId, processingMessage) {
+        console.log("[PayperPlane] Starting to poll for card details...");
+        const maxRetries = 10;
+        const delayMs = 2000;
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            console.log(`[PayperPlane] Polling attempt ${attempt}/${maxRetries} for funding ID: ${fundingId}`);
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/fundings/${fundingId}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-API-Key': 'test',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log("[PayperPlane] Funding details response:", data);
+
+                // Check if we have card details
+                if (data.card && data.card.token) {
+                    console.log("[PayperPlane] Card details received:", data.card);
+                    processingMessage.innerHTML = "✓ Card created!<br><small>Processing payment...</small>";
+
+                    // Now simulate the payment
+                    await this.simulatePayment(fundingId, processingMessage);
+                    return;
+                } else {
+                    console.log("[PayperPlane] Card not ready yet, waiting...");
+                    processingMessage.innerHTML = `✓ Transaction confirmed!<br><small>Waiting for card... (${attempt}/${maxRetries})</small>`;
+                }
+
+            } catch (error) {
+                console.error(`[PayperPlane] Polling attempt ${attempt} failed:`, error);
+                processingMessage.innerHTML = `✓ Transaction confirmed!<br><small>Retrying... (${attempt}/${maxRetries})</small>`;
+            }
+
+            // Wait before next attempt (except on last attempt)
+            if (attempt < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+        }
+
+        // If we get here, all attempts failed
+        console.error("[PayperPlane] Failed to get card details after 10 attempts");
+        processingMessage.innerHTML = "❌ Failed to create card<br><small>Please try again</small>";
+        processingMessage.style.background = "rgba(244, 67, 54, 0.1)";
+        processingMessage.style.borderColor = "rgba(244, 67, 54, 0.3)";
+    }
+
+    async simulatePayment(fundingId, processingMessage) {
+        console.log("[PayperPlane] Processing payment for funding ID:", fundingId);
+
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/fundings/${fundingId}/simulate`, {
+                method: 'POST',
+                headers: {
+                    'X-API-Key': 'test',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    descriptor: "AIRBNB",
+                    mcc: "7011"
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Simulation API error: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log("[PayperPlane] Payment simulation response:", data);
+
+            // Show success message
+            processingMessage.innerHTML = "✓ Payment completed!<br><small>Booking confirmed</small>";
+            processingMessage.style.background = "rgba(76, 175, 80, 0.1)";
+            processingMessage.style.borderColor = "rgba(76, 175, 80, 0.3)";
+
+        } catch (error) {
+            console.error("[PayperPlane] Payment simulation failed:", error);
+            processingMessage.innerHTML = "❌ Payment simulation failed<br><small>Please try again</small>";
+            processingMessage.style.background = "rgba(244, 67, 54, 0.1)";
+            processingMessage.style.borderColor = "rgba(244, 67, 54, 0.3)";
         }
     }
 
