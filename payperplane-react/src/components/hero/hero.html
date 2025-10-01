@@ -1,0 +1,538 @@
+            <section class="main-screen-new">
+                <div class="main-screen-new__backgrounds">
+                    <img class="main-screen-new__background main-screen-new__background_static"
+                        src="./files/main-screen-stars.svg" alt="background" decoding="async" width="1440"
+                        height="435" />
+                    <img class="main-screen-new__background main-screen-new__background_left"
+                        id="background-dynamic-left" src="./files/main-screen-coins-left.svg" alt="background"
+                        decoding="async" width="228" height="436" style="transform: translate(0px, 0px)" />
+                    <img class="main-screen-new__background main-screen-new__background_right"
+                        id="background-dynamic-right" src="./files/main-screen-coins-right.svg" alt="background"
+                        decoding="async" width="314" height="435" style="transform: translate(0px, 0px)" />
+                </div>
+                <div class="container main-screen-new__container">
+                    <h1 class="main-screen-new__title">
+                        Browser Extension<br /> Unlocks Crypto-Payments
+                    </h1>
+                </div>
+                <div class="main-screen-new__links-top">
+
+                        <div id="j-main-screen-new-sigma-tooltip" data-tooltip-id="main-new-tooltip">
+                            <div class="main-new-tooltip">
+                                <div class=""
+                                    id="main-new-tooltip" data-id="tooltip">
+                                    <style aria-hidden="true">
+                                        .t0271069c-4b32-485e-b584-a17f4feea28d {
+                                            color: #fff;
+                                            background: #222;
+                                            border: 1px solid transparent;
+                                            border-radius: undefinedpx;
+                                            padding: 8px 21px;
+                                        }
+
+                                        .t0271069c-4b32-485e-b584-a17f4feea28d.place-top {
+                                            margin-top: -10px;
+                                        }
+
+                                        .t0271069c-4b32-485e-b584-a17f4feea28d.place-top::before {
+                                            content: "";
+                                            background-color: inherit;
+                                            position: absolute;
+                                            z-index: 2;
+                                            width: 20px;
+                                            height: 12px;
+                                        }
+
+                                        .t0271069c-4b32-485e-b584-a17f4feea28d.place-top::after {
+                                            content: "";
+                                            position: absolute;
+                                            width: 10px;
+                                            height: 10px;
+                                            border-top-right-radius: undefinedpx;
+                                            border: 1px solid transparent;
+                                            background-color: #222;
+                                            z-index: -2;
+                                            bottom: -6px;
+                                            left: 50%;
+                                            margin-left: -6px;
+                                            transform: rotate(135deg);
+                                        }
+
+                                        .t0271069c-4b32-485e-b584-a17f4feea28d.place-bottom {
+                                            margin-top: 10px;
+                                        }
+
+                                        .t0271069c-4b32-485e-b584-a17f4feea28d.place-bottom::before {
+                                            content: "";
+                                            background-color: inherit;
+                                            position: absolute;
+                                            z-index: -1;
+                                            width: 18px;
+                                            height: 10px;
+                                        }
+
+                                        .t0271069c-4b32-485e-b584-a17f4feea28d.place-bottom::after {
+                                            content: "";
+                                            position: absolute;
+                                            width: 10px;
+                                            height: 10px;
+                                            border-top-right-radius: undefinedpx;
+                                            border: 1px solid transparent;
+                                            background-color: #222;
+                                            z-index: -2;
+                                            top: -6px;
+                                            left: 50%;
+                                            margin-left: -6px;
+                                            transform: rotate(45deg);
+                                        }
+
+                                        .t0271069c-4b32-485e-b584-a17f4feea28d.place-left {
+                                            margin-left: -10px;
+                                        }
+
+                                        .t0271069c-4b32-485e-b584-a17f4feea28d.place-left::before {
+                                            content: "";
+                                            background-color: inherit;
+                                            position: absolute;
+                                            z-index: -1;
+                                            width: 10px;
+                                            height: 18px;
+                                        }
+
+                                        .t0271069c-4b32-485e-b584-a17f4feea28d.place-left::after {
+                                            content: "";
+                                            position: absolute;
+                                            width: 10px;
+                                            height: 10px;
+                                            border-top-right-radius: undefinedpx;
+                                            border: 1px solid transparent;
+                                            background-color: #222;
+                                            z-index: -2;
+                                            right: -6px;
+                                            top: 50%;
+                                            margin-top: -6px;
+                                            transform: rotate(45deg);
+                                        }
+
+                                        .t0271069c-4b32-485e-b584-a17f4feea28d.place-right {
+                                            margin-left: 10px;
+                                        }
+
+                                        .t0271069c-4b32-485e-b584-a17f4feea28d.place-right::before {
+                                            content: "";
+                                            background-color: inherit;
+                                            position: absolute;
+                                            z-index: -1;
+                                            width: 10px;
+                                            height: 18px;
+                                        }
+
+                                        .t0271069c-4b32-485e-b584-a17f4feea28d.place-right::after {
+                                            content: "";
+                                            position: absolute;
+                                            width: 10px;
+                                            height: 10px;
+                                            border-top-right-radius: undefinedpx;
+                                            border: 1px solid transparent;
+                                            background-color: #222;
+                                            z-index: -2;
+                                            left: -6px;
+                                            top: 50%;
+                                            margin-top: -6px;
+                                            transform: rotate(-135deg);
+                                        }
+
+                                        /* Browser Mockup Styles */
+                                        .main-screen-new__mockup.BrowserMockup,
+                                        .BrowserMockup {
+                                            background: #1a1a1a !important;
+                                            border-radius: 12px !important;
+                                            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5) !important;
+                                            overflow: hidden !important;
+                                            transform: perspective(1000px) rotateX(0deg) rotateY(0deg) !important;
+                                            transition: transform 0.3s ease !important;
+                                            width: auto !important;
+                                            height: auto !important;
+                                            margin-left: 100px;
+                                            margin-top: 30px;
+                                            width: 700px !important;
+                                            height: 550px !important;
+                                        }
+
+                                        .BrowserMockup .BrowserMockup-header {
+                                            background: #2a2a2a !important;
+                                            padding: 12px !important;
+                                            display: flex !important;
+                                            align-items: center !important;
+                                            gap: 12px !important;
+                                        }
+
+                                        .BrowserMockup .browser-dots {
+                                            display: flex !important;
+                                            gap: 6px !important;
+                                        }
+
+                                        .BrowserMockup .browser-dots span {
+                                            width: 12px !important;
+                                            height: 12px !important;
+                                            border-radius: 50% !important;
+                                            background: #444 !important;
+                                        }
+
+                                        .BrowserMockup .browser-dots span:nth-child(1) {
+                                            background: #ff5f57 !important;
+                                        }
+
+                                        .BrowserMockup .browser-dots span:nth-child(2) {
+                                            background: #ffbd2e !important;
+                                        }
+
+                                        .BrowserMockup .browser-dots span:nth-child(3) {
+                                            background: #28ca42 !important;
+                                        }
+
+                                        .BrowserMockup .browser-address {
+                                            flex: 1 !important;
+                                            background: #1a1a1a !important;
+                                            padding: 6px 12px !important;
+                                            border-radius: 4px !important;
+                                            color: #888 !important;
+                                            font-size: 14px !important;
+                                            font-family: monospace !important;
+                                        }
+
+                                        .BrowserMockup .BrowserMockup-content {
+                                            background: white !important;
+                                            height: 700px !important;
+                                            overflow: hidden !important;
+                                        }
+
+                                        /* Airbnb Checkout Mockup */
+                                        .BrowserMockup .AirbnbCheckout {
+                                            padding: 30px !important;
+                                            width: 600px !important;
+                                            margin: 0 auto !important;
+                                        }
+
+                                        .BrowserMockup .checkout-header {
+                                            display: flex !important;
+                                            justify-content: space-between !important;
+                                            align-items: center !important;
+                                            margin-bottom: 24px !important;
+                                        }
+
+                                        .BrowserMockup .checkout-header h3 {
+                                            font-size: 22px !important;
+                                            font-weight: 600 !important;
+                                            color: #222 !important;
+                                        }
+
+                                        .BrowserMockup .price-tag {
+                                            font-size: 18px !important;
+                                            font-weight: 600 !important;
+                                            color: #222 !important;
+                                        }
+
+                                        .payment-options {
+                                            display: flex;
+                                            flex-direction: column;
+                                            gap: 12px;
+                                            margin-bottom: 24px;
+                                        }
+
+                                        .payment-option {
+                                            display: flex;
+                                            align-items: center;
+                                            padding: 16px;
+                                            border: 2px solid #ddd;
+                                            border-radius: 8px;
+                                            cursor: pointer;
+                                            transition: all 0.2s ease;
+                                        }
+
+                                        .payment-option:hover {
+                                            border-color: #999;
+                                        }
+
+                                        .payment-option input[type="radio"] {
+                                            margin-right: 12px;
+                                        }
+
+                                        .crypto-option {
+                                            position: relative;
+                                            overflow: hidden;
+                                        }
+
+                                        .crypto-option.highlighted {
+                                            border-color: #297561;
+                                            background: linear-gradient(45deg,
+                                                    rgba(41, 117, 97, 0.05) 0%,
+                                                    rgba(255, 90, 95, 0.05) 100%);
+                                            animation: pulseGlow 2s ease-in-out infinite;
+                                        }
+
+                                        @keyframes pulseGlow {
+
+                                            0%,
+                                            100% {
+                                                box-shadow: 0 0 0 0 rgba(41, 117, 97, 0);
+                                            }
+
+                                            50% {
+                                                box-shadow: 0 0 20px 5px rgba(41, 117, 97, 0.2);
+                                            }
+                                        }
+
+                                        .crypto-label {
+                                            display: flex;
+                                            align-items: center;
+                                            gap: 8px;
+                                        }
+
+                                        .crypto-icon {
+                                            width: 24px;
+                                            height: 24px;
+                                        }
+
+                                        .new-badge {
+                                            background: #297561;
+                                            color: white;
+                                            font-size: 10px;
+                                            font-weight: 700;
+                                            padding: 2px 6px;
+                                            border-radius: 4px;
+                                            margin-left: auto;
+                                            animation: bounceIn 0.5s ease;
+                                        }
+
+                                        @keyframes bounceIn {
+                                            0% {
+                                                transform: scale(0);
+                                            }
+
+                                            50% {
+                                                transform: scale(1.2);
+                                            }
+
+                                            100% {
+                                                transform: scale(1);
+                                            }
+                                        }
+
+                                        /* Crypto Payment Flow */
+                                        .crypto-payment-flow {
+                                            padding: 20px;
+                                            background: #f7f7f7;
+                                            border-radius: 8px;
+                                            min-height: 200px;
+                                        }
+
+                                        .wallet-connect-step,
+                                        .payment-confirm-step,
+                                        .success-step {
+                                            text-align: center;
+                                            animation: fadeIn 0.5s ease;
+                                        }
+
+                                        @keyframes fadeIn {
+                                            from {
+                                                opacity: 0;
+                                                transform: translateY(10px);
+                                            }
+
+                                            to {
+                                                opacity: 1;
+                                                transform: translateY(0);
+                                            }
+                                        }
+
+                                        .step-icon {
+                                            font-size: 36px;
+                                            margin-bottom: 0px;
+                                            animation: iconBounce 1s ease infinite;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                        }
+                                        
+                                        .step-icon img {
+                                            width: 36px;
+                                            height: 36px;
+                                            object-fit: contain;
+                                        }
+
+                                        @keyframes iconBounce {
+
+                                            0%,
+                                            100% {
+                                                transform: translateY(0);
+                                            }
+
+                                            50% {
+                                                transform: translateY(-10px);
+                                            }
+                                        }
+
+                                        .wallet-connect-step h4,
+                                        .payment-confirm-step h4,
+                                        .success-step h4 {
+                                            font-size: 18px;
+                                            margin-bottom: 16px;
+                                            color: #222;
+                                        }
+
+                                        .connect-wallet-btn {
+                                            display: block;
+                                            width: 100%;
+                                            max-width: 200px;
+                                            margin: 8px auto;
+                                            padding: 12px 24px;
+                                            background: #297561;
+                                            color: white;
+                                            border: none;
+                                            border-radius: 8px;
+                                            font-weight: 600;
+                                            cursor: pointer;
+                                            transition: all 0.2s ease;
+                                        }
+
+                                        .connect-wallet-btn:hover {
+                                            background: #1F5445;
+                                            transform: translateY(-1px);
+                                        }
+
+                                        .connect-wallet-btn.secondary {
+                                            background: white;
+                                            color: #222;
+                                            border: 2px solid #ddd;
+                                        }
+
+                                        .connect-wallet-btn.secondary:hover {
+                                            border-color: #999;
+                                        }
+
+                                        .crypto-amount {
+                                            display: flex;
+                                            flex-direction: column;
+                                            align-items: center;
+                                            margin-bottom: 20px;
+                                        }
+
+                                        .amount {
+                                            font-size: 32px;
+                                            font-weight: 700;
+                                            color: #297561;
+                                        }
+
+                                        .usd-value {
+                                            font-size: 16px;
+                                            color: #666;
+                                        }
+
+                                        .pay-crypto-btn {
+                                            padding: 16px 32px;
+                                            background: #297561;
+                                            color: white;
+                                            border: none;
+                                            border-radius: 8px;
+                                            font-size: 18px;
+                                            font-weight: 600;
+                                            cursor: pointer;
+                                            transition: all 0.2s ease;
+                                        }
+
+                                        .pay-crypto-btn:hover {
+                                            background: #1F5445;
+                                            transform: translateY(-2px);
+                                            box-shadow: 0 10px 20px rgba(41, 117, 97, 0.3);
+                                        }
+
+                                        .success-icon {
+                                            font-size: 64px;
+                                            animation: successPop 0.5s ease;
+                                        }
+
+                                        @keyframes successPop {
+                                            0% {
+                                                transform: scale(0) rotate(-180deg);
+                                            }
+
+                                            50% {
+                                                transform: scale(1.2) rotate(10deg);
+                                            }
+
+                                            100% {
+                                                transform: scale(1) rotate(0deg);
+                                            }
+                                        }
+
+                                        .hidden {
+                                            display: none;
+                                        }
+                                    </style>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="main-screen-new__images-desktop">
+                    <!-- Floating Browser Mockup in Center - Mobile Version -->
+                    <div class="main-screen-new__mockup main-screen-new__mockup_mobile BrowserMockup"
+                        id="mobile-mockup" style="transform: translateY(0px); transform: translate(-50%, -50%)">
+                        <div class="BrowserMockup-header">
+                            <div class="browser-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                            <div class="browser-address">
+                                airbnb.com.sg/book/stays
+                            </div>
+                        </div>
+                        <div class="BrowserMockup-content">
+                            <div class="AirbnbCheckout">
+                                <div class="checkout-header">
+                                    <h3>Connect and Pay</h3>
+                                    <div class="price-tag">$450 SGD</div>
+                                </div>
+                                <div class="payment-options">
+                                    <label class="payment-option">
+                                        <input type="radio" name="payment" value="card" />
+                                        <span>Credit or debit card</span>
+                                    </label>
+                                    <label class="payment-option crypto-option highlighted">
+                                        <input type="radio" name="payment" value="crypto" checked />
+                                        <span class="crypto-label">
+                                            <img src="./files/logo.png" width="16" height="24" />
+                                            Pay with Crypto
+                                            <span class="new-badge">NEW</span>
+                                        </span>
+                                    </label>
+                                </div>
+                                <div class="crypto-payment-flow" id="cryptoFlowMobile">
+                                    <div class="wallet-connect-step" id="step1Mobile">
+                                        <div class="step-icon">
+                                            <img src="files/metamask-fox.svg" alt="MetaMask">
+                                        </div>
+                                        <h4>Connect your wallet</h4>
+                                        <button class="connect-wallet-btn">Connect MetaMask</button>
+                                        <button class="connect-wallet-btn secondary">WalletConnect</button>
+                                    </div>
+
+                                    <div class="payment-confirm-step hidden" id="step2Mobile">
+                                        <div class="crypto-amount">
+                                            <span class="amount">0.34 BNB</span>
+                                            <span class="usd-value">≈ $450 USD</span>
+                                        </div>
+                                        <button class="pay-crypto-btn">Pay with BNB</button>
+                                    </div>
+
+                                    <div class="success-step hidden" id="step3Mobile">
+                                        <div class="success-icon">✅</div>
+                                        <h4 style="margin-bottom: 0px;">Payment Successful!</h4>
+                                        <p>Redirecting to confirmation...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>

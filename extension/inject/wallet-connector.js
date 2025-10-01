@@ -2,10 +2,10 @@
 (function() {
 
     // Listen for connection requests from the content script
-    window.addEventListener('onlybnb-connect-wallet', async (event) => {
+    window.addEventListener('payperplane-connect-wallet', async (event) => {
 
         const responseEvent = (data) => {
-            window.dispatchEvent(new CustomEvent('onlybnb-wallet-response', { detail: data }));
+            window.dispatchEvent(new CustomEvent('payperplane-wallet-response', { detail: data }));
         };
 
         try {
@@ -50,7 +50,7 @@
             });
 
             // Store the connected account globally for balance queries
-            window.__onlybnb_account = account;
+            window.__payperplane_account = account;
 
         } catch (error) {
             responseEvent({
@@ -62,10 +62,10 @@
     });
 
     // Listen for BSC network switch requests
-    window.addEventListener('onlybnb-switch-network', async (event) => {
+    window.addEventListener('payperplane-switch-network', async (event) => {
 
         const responseEvent = (data) => {
-            window.dispatchEvent(new CustomEvent('onlybnb-network-response', { detail: data }));
+            window.dispatchEvent(new CustomEvent('payperplane-network-response', { detail: data }));
         };
 
         try {
@@ -117,14 +117,14 @@
     });
 
     // Listen for balance fetch requests
-    window.addEventListener('onlybnb-fetch-balances', async (event) => {
+    window.addEventListener('payperplane-fetch-balances', async (event) => {
 
         const responseEvent = (data) => {
-            window.dispatchEvent(new CustomEvent('onlybnb-balances-response', { detail: data }));
+            window.dispatchEvent(new CustomEvent('payperplane-balances-response', { detail: data }));
         };
 
         try {
-            if (!window.ethereum || !window.__onlybnb_account) {
+            if (!window.ethereum || !window.__payperplane_account) {
                 responseEvent({
                     success: false,
                     error: 'Wallet not connected'
@@ -132,7 +132,7 @@
                 return;
             }
 
-            const account = window.__onlybnb_account;
+            const account = window.__payperplane_account;
 
             // Get native BNB balance
             const bnbBalance = await window.ethereum.request({
@@ -203,10 +203,10 @@
     });
 
     // Listen for BNB price fetch requests
-    window.addEventListener('onlybnb-fetch-bnb-price', async (event) => {
+    window.addEventListener('payperplane-fetch-bnb-price', async (event) => {
 
         const responseEvent = (data) => {
-            window.dispatchEvent(new CustomEvent('onlybnb-price-response', { detail: data }));
+            window.dispatchEvent(new CustomEvent('payperplane-price-response', { detail: data }));
         };
 
         try {
@@ -281,10 +281,10 @@
     });
 
     // Listen for transaction send requests
-    window.addEventListener('onlybnb-send-transaction', async (event) => {
+    window.addEventListener('payperplane-send-transaction', async (event) => {
 
         const responseEvent = (data) => {
-            window.dispatchEvent(new CustomEvent('onlybnb-transaction-response', { detail: data }));
+            window.dispatchEvent(new CustomEvent('payperplane-transaction-response', { detail: data }));
         };
 
         try {
@@ -296,17 +296,24 @@
                 return;
             }
 
-            const { from, to, value, gas } = event.detail;
+            const { from, to, value, gas, data } = event.detail;
 
             // Send transaction
+            const txParams = {
+                from: from,
+                to: to,
+                value: value,
+                gas: gas || '0x5208',
+            };
+            
+            // Add data field if present (for contract interaction)
+            if (data) {
+                txParams.data = data;
+            }
+            
             const txHash = await window.ethereum.request({
                 method: 'eth_sendTransaction',
-                params: [{
-                    from: from,
-                    to: to,
-                    value: value,
-                    gas: gas || '0x5208',
-                }],
+                params: [txParams],
             });
 
             responseEvent({

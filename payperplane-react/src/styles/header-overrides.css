@@ -1,0 +1,50 @@
+/* Remove all dropdown hover effects */
+.menu__item:hover .submenu__dropdown {
+    display: none !important;
+}
+
+.submenu__dropdown {
+    display: none !important;
+}
+
+.submenu__name-icon {
+    display: none !important;
+}
+
+/* Simple menu link styles */
+.menu__link {
+    display: block;
+    padding: 10px 20px;
+    text-decoration: none;
+    color: #fff;  /* White color to match the header */
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    user-select: none;
+}
+
+.menu__link:hover {
+    color: #4a9eff;
+    transform: translateY(-1px);
+}
+
+.menu__link:active {
+    transform: translateY(0);
+    color: #2d7dd2;
+}
+
+.menu__link[data-modal] {
+    position: relative;
+}
+
+/* Ensure menu items are interactive */
+.menu__item {
+    position: relative;
+}
+
+/* Debug styles to ensure visibility */
+.menu__link[data-modal] {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
