@@ -1,0 +1,128 @@
+/* OnlyBnB Content Script Styles */
+
+.onlybnb-payment-option {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.onlybnb-pay-button:hover {
+    background: #E5A50A !important;
+    transform: scale(1.02);
+}
+
+.onlybnb-pay-button:active {
+    transform: scale(0.98);
+}
+
+.onlybnb-pay-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Spinner for loading state */
+.onlybnb-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #000;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Success checkmark animation */
+.onlybnb-success-check {
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    position: relative;
+}
+
+.onlybnb-success-check::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    color: #4CAF50;
+    animation: checkmark 0.3s ease-out;
+}
+
+@keyframes checkmark {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Override Airbnb styles if needed */
+.onlybnb-payment-option * {
+    box-sizing: border-box;
+}
+
+/* Ensure our button doesn't inherit unwanted styles */
+.onlybnb-pay-button {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    outline: none;
+    text-decoration: none;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .onlybnb-payment-option {
+        margin: 12px 0;
+        padding: 12px;
+    }
+
+    .onlybnb-pay-button {
+        padding: 12px 20px;
+        font-size: 15px;
+    }
+}
+
+/* Styles for injected payment option in dropdown */
+.onlybnb-payment-option-menu {
+    position: relative;
+    background-color: white !important;
+}
+
+.onlybnb-payment-option-menu::before {
+    content: '💰';
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+}
+
+.onlybnb-payment-option-menu[data-onlybnb="true"] {
+    padding-left: 48px !important;
+}
+
+/* Highlight on hover */
+.onlybnb-payment-option-menu:hover {
+    background-color: #FFF8E7 !important;
+}
+
