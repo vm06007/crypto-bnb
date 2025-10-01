@@ -254,18 +254,13 @@
                     <h3>Watch PayperPlane in Action</h3>
                     <p style="margin-bottom: 20px;">See how easy it is to pay with crypto on any website that accepts cards.</p>
                     <div style="position: relative; max-width: 100%; background: #000; border-radius: 8px; overflow: hidden;">
-                        <video
-                            id="demo-video"
-                            style="width: 100%; height: auto; display: block;"
-                            controls
-                            autoplay
-                            muted
-                            playsinline
-                            poster="/files/demo-poster.jpg">
-                            <source src="/files/payperplane-demo.mp4" type="video/mp4">
-                            <source src="/files/payperplane-demo.webm" type="video/webm">
-                            Your browser does not support the video tag.
-                        </video>
+                        <iframe
+                            src="https://player.vimeo.com/video/1123711341?autoplay=1&muted=1&loop=0&title=0&byline=0&portrait=0"
+                            style="width: 100%; height: 400px; border: none; border-radius: 8px;"
+                            frameborder="0"
+                            allow="autoplay; fullscreen; picture-in-picture"
+                            allowfullscreen>
+                        </iframe>
                     </div>
                     <div style="margin-top: 30px;">
                         <h4>Key Features Demonstrated:</h4>
