@@ -190,7 +190,7 @@ class FundedEventListener:
         if self.thread and self.thread.is_alive():
             return
         # Avoid blocking on startup; determine latest block inside the thread
-        self.last_block = 0
+        self.last_block = self.web3.eth.block_number
         self.stop_event.clear()
         self.thread = threading.Thread(target=self._run, name="funded-listener", daemon=True)
         self.thread.start()
@@ -212,9 +212,11 @@ class FundedEventListener:
                 latest = self.web3.eth.block_number
                 from_block = self.last_block + 1
                 to_block = latest
+                print(f"Checking for Funded events from_block: {from_block}, to_block: {to_block}")
                 if from_block <= to_block:
                     events = self.contract.events.Funded().get_logs(from_block=from_block, to_block=to_block)
                     for ev in events:
+                        print(f"Found Funded event: {ev}")
                         args = ev["args"]
                         raw_cc = args.get("currencyCode")
                         currency_value = None
