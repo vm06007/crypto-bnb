@@ -154,6 +154,57 @@ Backend instantly generates single-use virtual cards for each transaction, ensur
    uv run fastapi dev main.py
    ```
 
+## 📍 Deployed Contract
+
+### PayperPlane Smart Contract on BSC Mainnet
+
+The PayperPlane smart contract is live on the Binance Smart Chain (BSC) mainnet:
+
+- **Contract Address**: [`0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693`](https://bscscan.com/address/0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693)
+- **Network**: BSC Mainnet
+- **Chain ID**: 56
+- **Explorer**: [View on BscScan](https://bscscan.com/address/0xc6bb3c35f6a80338c49c3e4f2c083f21ac36d693)
+
+### Contract Features
+
+The deployed contract includes:
+- **ERC20 Token Support**: Accept payments in any BEP20 token
+- **Native BNB Support**: Direct BNB payments
+- **Price Feed Integration**: Chainlink oracle integration for accurate pricing
+- **Access Control**: Role-based permissions for admin functions
+- **Pausable**: Emergency pause functionality for security
+- **Reentrancy Protection**: Secure against reentrancy attacks
+- **Event Logging**: Comprehensive event emission for backend integration
+
+### Interacting with the Contract
+
+To interact with the deployed contract:
+
+1. **Add BSC Network to MetaMask**:
+   ```
+   Network Name: Binance Smart Chain
+   RPC URL: https://bsc-dataseed.binance.org/
+   Chain ID: 56
+   Currency Symbol: BNB
+   Block Explorer: https://bscscan.com
+   ```
+
+2. **Contract ABI**: Available in `evm/out/PayperPlane.sol/PayperPlane.json`
+
+3. **Key Functions**:
+   - `fundCard()`: Fund a virtual card with crypto
+   - `updateCardStatus()`: Update card payment status
+   - `withdrawToken()`: Admin function to withdraw tokens
+   - `pause()/unpause()`: Emergency controls
+
+### Verified Contract
+
+The contract is verified on BscScan, allowing you to:
+- Read the source code directly
+- Interact with functions via BscScan interface
+- View all transactions and events
+- Check contract balance and token holdings
+
 ## 🔧 Building and Installing the Browser Extension
 
 ### Prerequisites for Extension

@@ -48,8 +48,8 @@ class PayperPlaneInjector {
             background: rgba(240, 185, 11, 0.1);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(240, 185, 11, 0.2);
-            color: #F0B90B;
+            border: 1px solid rgba(41, 117, 97, 0.2);
+            color:rgb(71, 71, 71);
             padding: 16px 24px;
             border-radius: 16px;
             z-index: 10000;
@@ -241,7 +241,7 @@ class PayperPlaneInjector {
             font-weight: 500;
             line-height: 1.5;
             font-size: 16px;
-            color: #222222;
+            color: fff;
         `;
         const toggleButton = document.createElement("button");
         toggleButton.className = "payperplane-crypto-switch";
@@ -318,15 +318,15 @@ class PayperPlaneInjector {
         `;
         cryptoToggle.innerHTML = `
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                <div style="width: 24px; height: 24px; background: #F0B90B; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">B</div>
+                <img src="https://bscscan.com/assets/bsc/images/svg/logos/token-light.svg?v=25.9.4.0" alt="BNB Token" style="width: 24px; height: 24px; border-radius: 4px; object-fit: contain;">
                 <div>
-                    <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #222;">Pay with crypto</h3>
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #fff;">Pay with crypto</h3>
                     <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">Secure BNB payment</p>
                 </div>
             </div>
             <button id="payperplane-crypto-toggle-button" style="
                 width: 100%;
-                background: #F0B90B;
+                background: #297561;
                 color: #000;
                 border: none;
                 border-radius: 6px;
@@ -357,7 +357,7 @@ class PayperPlaneInjector {
                 toggleButton.style.color = "white";
                 setTimeout(() => {
                     toggleButton.textContent = "Connect Wallet";
-                    toggleButton.style.background = "#F0B90B";
+                    toggleButton.style.background = "#297561";
                     toggleButton.style.color = "#000";
                 }, 3000);
             }
@@ -373,7 +373,7 @@ class PayperPlaneInjector {
         const updateToggle = async (enabled) => {
             isCryptoEnabled = enabled;
             if (enabled) {
-                toggleButton.style.background = "#F0B90B";
+                toggleButton.style.background = "#297561";
                 toggleKnob.style.transform = "translateX(16px)";
                 toggleButton.setAttribute("aria-checked", "true");
                 if (!toggleKnob.querySelector(".tick-mark")) {
@@ -384,7 +384,7 @@ class PayperPlaneInjector {
                         top: 50%;
                         left: 50%;
                         transform: translate(-50%, -50%);
-                        color: #F0B90B;
+                        color: #297561;
                         font-size: 16px;
                         font-weight: bold;
                         line-height: 1;
@@ -755,14 +755,64 @@ class PayperPlaneInjector {
                     throw new Error("No wallet connected");
                 }
             }
-            const treasuryAddress = "0xa803c226c8281550454523191375695928DcFE92";
+            // PayperPlane contract address
+            const payperPlaneContract = "0xc6BB3C35f6a80338C49C3e4F2c083f21ac36d693";
             const bnbAsNumber = parseFloat(calculation.bnbAmount);
             const weiAmount = BigInt(Math.floor(bnbAsNumber * Math.pow(10, 18)));
-            console.log("[PayperPlane] Sending transaction:", {
-                from: this.connectedAccount,
-                to: treasuryAddress,
+
+            // Generate unique ID for this payment (using timestamp + random)
+            const paymentId = BigInt(Date.now() * 1000 + Math.floor(Math.random() * 1000));
+
+            // Convert fiat amount to cents (SGD * 100)
+            const fiatAmountInCents = BigInt(Math.floor(parseFloat(calculation.totalPrice.amount) * 100));
+
+            // Prepare fund() function call data
+            // fund(uint256 _id, address _tokenAddress, uint256 _tokenAmount, string _currencyCode, uint256 _fiatAmount)
+            // This is a PAYABLE function - we send BNB value with the transaction
+            // Function selector 0x0cca551c for fund(uint256,address,uint256,string,uint256)
+            const functionSelector = this.calculateFunctionSelector("fund(uint256,address,uint256,string,uint256)");
+
+            // Determine currency code - default to SGD if not USD
+            const currencyCode = calculation.totalPrice.currency === "USD" ? "USD" : "SGD";
+
+            // Encode parameters
+            const encodedParams = this.encodeFundParams(
+                paymentId,
+                "0x0000000000000000000000000000000000000000", // address(0) for native BNB
+                weiAmount,
+                currencyCode,
+                fiatAmountInCents
+            );
+
+            const data = functionSelector + encodedParams;
+
+            console.log("[PayperPlane] Calling fund() on contract:", {
+                contract: payperPlaneContract,
+                id: paymentId.toString(),
+                tokenAddress: "0x0000000000000000000000000000000000000000",
+                tokenAmount: weiAmount.toString(),
+                currencyCode: currencyCode,
+                fiatAmount: fiatAmountInCents.toString(),
                 value: weiAmount.toString()
             });
+
+            console.log("[PayperPlane] Transaction payload:", {
+                functionSelector: functionSelector,
+                encodedParams: encodedParams,
+                fullData: data,
+                dataLength: data.length,
+                hexDataLength: (data.length - 2) / 2 + " bytes" // Remove 0x prefix
+            });
+
+            // Log the transaction parameters that will be sent
+            console.log("[PayperPlane] Transaction parameters:", {
+                from: this.connectedAccount,
+                to: payperPlaneContract,
+                value: "0x" + weiAmount.toString(16) + " (" + weiAmount.toString() + " wei)",
+                data: data,
+                gas: "0x30D40 (200000)"
+            });
+
             const txHash = await new Promise((resolve, reject) => {
                 const handleResponse = (event) => {
                     window.removeEventListener("payperplane-transaction-response", handleResponse);
@@ -776,9 +826,10 @@ class PayperPlaneInjector {
                 window.dispatchEvent(new CustomEvent("payperplane-send-transaction", {
                     detail: {
                         from: this.connectedAccount,
-                        to: treasuryAddress,
+                        to: payperPlaneContract,
                         value: "0x" + weiAmount.toString(16),
-                        gas: "0x5208"
+                        data: data,
+                        gas: "0x30D40" // 200000 gas for contract interaction
                     }
                 }));
                 setTimeout(() => {
@@ -857,6 +908,79 @@ class PayperPlaneInjector {
             currency: totalPrice.currency,
             bookingId: window.location.pathname.split("/").pop() || ""
         };
+    }
+
+    encodeFundParams(id, tokenAddress, tokenAmount, currencyCode, fiatAmount) {
+        // Remove 0x prefix from addresses if present
+        const cleanAddress = tokenAddress.replace(/^0x/, '').toLowerCase();
+
+        // Pad uint256 values to 32 bytes (64 hex chars)
+        const paddedId = id.toString(16).padStart(64, '0');
+        const paddedAddress = cleanAddress.padStart(64, '0');
+        const paddedTokenAmount = tokenAmount.toString(16).padStart(64, '0');
+        const paddedFiatAmount = fiatAmount.toString(16).padStart(64, '0');
+
+        // For dynamic string parameter, the offset points to where the string data starts
+        // After 5 32-byte parameters: id, address, amount, offset, fiatAmount = 5 * 32 = 160 (0xa0)
+        const stringDataOffset = "00000000000000000000000000000000000000000000000000000000000000a0";
+
+        // Encode the string
+        const stringBytes = new TextEncoder().encode(currencyCode);
+        const stringLength = stringBytes.length.toString(16).padStart(64, '0');
+
+        // Convert string to hex and pad to multiple of 32 bytes
+        let stringHex = '';
+        for (let i = 0; i < stringBytes.length; i++) {
+            stringHex += stringBytes[i].toString(16).padStart(2, '0');
+        }
+
+        // Pad string hex to next 32-byte boundary
+        const paddingNeeded = 64 - (stringHex.length % 64);
+        if (paddingNeeded !== 64) {
+            stringHex = stringHex.padEnd(stringHex.length + paddingNeeded, '0');
+        }
+
+        console.log("[PayperPlane] Encoding parameters:", {
+            id: paddedId,
+            tokenAddress: paddedAddress,
+            tokenAmount: paddedTokenAmount,
+            stringOffset: stringDataOffset,
+            fiatAmount: paddedFiatAmount,
+            stringLength: stringLength,
+            stringHex: stringHex,
+            currencyCode: currencyCode,
+            fullEncoding: paddedId + paddedAddress + paddedTokenAmount + stringDataOffset + paddedFiatAmount + stringLength + stringHex
+        });
+
+        // Combine all parameters in correct order
+        return paddedId +
+               paddedAddress +
+               paddedTokenAmount +
+               stringDataOffset +
+               paddedFiatAmount +
+               stringLength +
+               stringHex;
+    }
+
+    // Helper function to calculate function selector
+    calculateFunctionSelector(signature) {
+        // This is a simplified version - in production use web3.js or ethers.js
+        // The actual selector for fund(uint256,address,uint256,string,uint256) is 0x0cca551c
+        // Verified from contract at 0xc6BB3C35f6a80338C49C3e4F2c083f21ac36d693
+        return "0x0cca551c";
+    }
+
+    // Test the encoding
+    testEncoding() {
+        const testId = BigInt("7278606436507629840");
+        const testAddress = "0x0000000000000000000000000000000000000000";
+        const testAmount = BigInt("78061287565840384");
+        const testCurrency = "SGD";
+        const testFiat = BigInt("10001");
+
+        const encoded = this.encodeFundParams(testId, testAddress, testAmount, testCurrency, testFiat);
+        console.log("[PayperPlane] Test encoding result:", encoded);
+        console.log("[PayperPlane] Expected result should match your data");
     }
     async showCryptoPaymentOptions(paymentSection) {
         if (!paymentSection.dataset.originalContent) {
@@ -1077,19 +1201,15 @@ class PayperPlaneInjector {
             background: white;
             transition: border-color 0.2s ease;
         `;
-        const tokenIcon = document.createElement("div");
+        const tokenIcon = document.createElement("img");
         tokenIcon.style.cssText = `
             width: 32px;
             height: 32px;
-            background: linear-gradient(135deg, #F0B90B, #FFD700);
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
+            object-fit: contain;
         `;
-        tokenIcon.textContent = "B";
+        tokenIcon.src = "https://bscscan.com/assets/bsc/images/svg/logos/token-light.svg?v=25.9.4.0";
+        tokenIcon.alt = "BNB Token";
         const tokenInfo = document.createElement("div");
         tokenInfo.style.cssText = "flex: 1;";
         const tokenName = document.createElement("div");
@@ -1151,7 +1271,7 @@ class PayperPlaneInjector {
             margin-top: 4px;
         `;
         const tokens = [
-            { symbol: "BNB", name: "Binance Token", icon: "B", color: "#F0B90B", address: "0xbb4CdB9Bd36B01bD1cBaEBF2De08d9173bc095c", enabled: true },
+            { symbol: "BNB", name: "Binance Token", icon: "B", color: "#297561", address: "0xbb4CdB9Bd36B01bD1cBaEBF2De08d9173bc095c", enabled: true, imageUrl: "https://bscscan.com/assets/bsc/images/svg/logos/token-light.svg?v=25.9.4.0" },
             { symbol: "ETH", name: "Ethereum", icon: "\u039E", color: "#627EEA", address: "0x2170Ed0880ac9A755fd29B2688956BD959F933F8", enabled: false },
             { symbol: "USDT", name: "Tether USD", icon: "\u20AE", color: "#26A17B", address: "0x55d398326f99059fF775485246999027B3197955", enabled: false },
             { symbol: "USDC", name: "USD Coin", icon: "$", color: "#2775CA", address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", enabled: false }
@@ -1179,20 +1299,31 @@ class PayperPlaneInjector {
                 opacity: ${token.enabled ? "1" : "0.5"};
                 position: relative;
             `;
-            const optionIcon = document.createElement("div");
-            optionIcon.style.cssText = `
-                width: 32px;
-                height: 32px;
-                background: ${token.enabled ? token.color : "#cccccc"};
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 16px;
-                font-weight: bold;
-                color: white;
-            `;
-            optionIcon.textContent = token.icon;
+            const optionIcon = token.imageUrl ? document.createElement("img") : document.createElement("div");
+            if (token.imageUrl) {
+                optionIcon.style.cssText = `
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    object-fit: contain;
+                `;
+                optionIcon.src = token.imageUrl;
+                optionIcon.alt = `${token.symbol} Token`;
+            } else {
+                optionIcon.style.cssText = `
+                    width: 32px;
+                    height: 32px;
+                    background: ${token.enabled ? token.color : "#cccccc"};
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: white;
+                `;
+                optionIcon.textContent = token.icon;
+            }
             const optionInfo = document.createElement("div");
             optionInfo.style.cssText = "flex: 1;";
             const optionHeader = document.createElement("div");
@@ -1207,7 +1338,7 @@ class PayperPlaneInjector {
             if (!token.enabled) {
                 const comingSoon = document.createElement("div");
                 comingSoon.textContent = "Coming soon";
-                comingSoon.style.cssText = "font-size: 11px; color: #F0B90B; font-style: italic; margin-bottom: 2px;";
+                comingSoon.style.cssText = "font-size: 11px; color: #297561; font-style: italic; margin-bottom: 2px;";
                 optionRight.appendChild(comingSoon);
             }
             const optionBalance = document.createElement("div");
@@ -1229,8 +1360,13 @@ class PayperPlaneInjector {
                     e.stopPropagation();
                     return;
                 }
-                tokenIcon.textContent = token.icon;
-                tokenIcon.style.background = token.color;
+                if (token.imageUrl) {
+                    tokenIcon.src = token.imageUrl;
+                    tokenIcon.alt = `${token.symbol} Token`;
+                } else {
+                    tokenIcon.textContent = token.icon;
+                    tokenIcon.style.background = token.color;
+                }
                 tokenName.textContent = token.name;
                 tokenBalance.textContent = `Balance: ${balances[token.symbol] || "0.0000"} ${token.symbol}`;
                 tokenOptions.style.display = "none";
@@ -1289,7 +1425,7 @@ class PayperPlaneInjector {
                     </div>
                     <div style="display: flex; justify-content: space-between; padding-top: 16px; font-size:16px; border-top: 1px solid #dee2e6; font-weight: 600; color: #495057;">
                         <span>You Pay:</span>
-                        <span style="color: #F0B90B;">${calculation.bnbAmount} BNB</span>
+                        <span style="color: #297561;">${calculation.bnbAmount} BNB</span>
                     </div>
                 `;
                 }
@@ -1308,7 +1444,7 @@ class PayperPlaneInjector {
                     </div>
                     <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #dee2e6; font-weight: 600; color: #495057;">
                         <span>You Pay:</span>
-                        <span style="color: #F0B90B;">0.2084 BNB</span>
+                        <span style="color: #297561;">0.2084 BNB</span>
                     </div>
                 `;
                 }
@@ -1319,7 +1455,7 @@ class PayperPlaneInjector {
                     summaryElement.innerHTML = `
                     <div style="color: #666; text-align: center;">
                         Failed to calculate payment. Using demo values:<br>
-                        <strong style="color: #F0B90B;">0.2084 BNB for 125.12 SGD</strong>
+                        <strong style="color: #297561;">0.2084 BNB for 125.12 SGD</strong>
                     </div>
                 `;
                 }
@@ -1328,8 +1464,8 @@ class PayperPlaneInjector {
         const payButton = document.createElement("button");
         payButton.style.cssText = `
             width: 100%;
-            background: #F0B90B;
-            color: #000;
+            background: #297561;
+            color: #fff;
             border: none;
             border-radius: 8px;
             padding: 16px;
@@ -1345,10 +1481,10 @@ class PayperPlaneInjector {
         `;
         payButton.innerHTML = `Pay with Crypto`;
         payButton.addEventListener("mouseenter", () => {
-            payButton.style.background = "#E5A50A";
+            payButton.style.background = "#1F5445";
         });
         payButton.addEventListener("mouseleave", () => {
-            payButton.style.background = "#F0B90B";
+            payButton.style.background = "#297561";
         });
         payButton.addEventListener("click", async (e) => {
             e.preventDefault();
@@ -1365,7 +1501,7 @@ class PayperPlaneInjector {
                     <span style="font-size: 20px;">\u20BF</span>
                     Pay with Crypto
                 `;
-                payButton.style.background = "#F0B90B";
+                payButton.style.background = "#297561";
             }
         });
         container.appendChild(header);

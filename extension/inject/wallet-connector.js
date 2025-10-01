@@ -296,17 +296,24 @@
                 return;
             }
 
-            const { from, to, value, gas } = event.detail;
+            const { from, to, value, gas, data } = event.detail;
 
             // Send transaction
+            const txParams = {
+                from: from,
+                to: to,
+                value: value,
+                gas: gas || '0x5208',
+            };
+            
+            // Add data field if present (for contract interaction)
+            if (data) {
+                txParams.data = data;
+            }
+            
             const txHash = await window.ethereum.request({
                 method: 'eth_sendTransaction',
-                params: [{
-                    from: from,
-                    to: to,
-                    value: value,
-                    gas: gas || '0x5208',
-                }],
+                params: [txParams],
             });
 
             responseEvent({
