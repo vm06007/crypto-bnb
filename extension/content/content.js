@@ -760,8 +760,8 @@ class PayperPlaneInjector {
             const bnbAsNumber = parseFloat(calculation.bnbAmount);
             const weiAmount = BigInt(Math.floor(bnbAsNumber * Math.pow(10, 18)));
 
-            // Generate unique ID for this payment (using timestamp + random)
-            const paymentId = BigInt(Date.now() * 1000 + Math.floor(Math.random() * 1000));
+            // Generate unique ID for this payment through backend API
+            const paymentId = await this.generateFundingId();
 
             // Convert fiat amount to cents (SGD * 100)
             const fiatAmountInCents = BigInt(Math.floor(parseFloat(calculation.totalPrice.amount) * 100));
@@ -1613,6 +1613,34 @@ class PayperPlaneInjector {
             };
         }
     }
+
+    async generateFundingId() {
+        console.log("[PayperPlane] Generating funding ID from backend...");
+        try {
+            const response = await fetch('http://127.0.0.1:8000/fundings/generate', {
+                method: 'POST',
+                headers: {
+                    'X-API-Key': 'test',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Backend API error: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            const fundingId = BigInt(data.id);
+            console.log("[PayperPlane] Generated funding ID:", fundingId.toString());
+            return fundingId;
+        } catch (error) {
+            console.error("[PayperPlane] Failed to generate funding ID:", error);
+            // Fallback to timestamp-based ID if backend fails
+            console.log("[PayperPlane] Falling back to timestamp-based ID");
+            return BigInt(Date.now() * 1000 + Math.floor(Math.random() * 1000));
+        }
+    }
+
     async processPayment() {
     }
     showPaymentSuccess() {
