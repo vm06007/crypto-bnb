@@ -1,4 +1,5 @@
 # PayperPlane - Universal Crypto Payment Solution
+<img width="1000" height="1100" alt="logo_trans" src="https://github.com/user-attachments/assets/23e53b76-8714-45af-acf0-2529bfebca0c" />
 
 PayperPlane is a browser extension that enables crypto payments on ANY website that accepts card payments, even if the merchant doesn't support cryptocurrency.
 
