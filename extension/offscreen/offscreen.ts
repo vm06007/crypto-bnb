@@ -1,19 +1,6 @@
 // Offscreen document for automated card addition to Airbnb
 
-interface VirtualCard {
-    id: string;
-    cardNumber: string;
-    expiryMonth: string;
-    expiryYear: string;
-    cvv: string;
-    last4: string;
-    brand: string;
-}
-
-interface AddCardRequest {
-    card: VirtualCard;
-    paymentTabId: number;
-}
+import { VirtualCard, AddCardRequest } from '../../shared/types';
 
 class OffscreenCardAdder {
     private iframe: HTMLIFrameElement | null = null;

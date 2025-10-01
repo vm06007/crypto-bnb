@@ -10,13 +10,13 @@ export interface PaymentRequest {
 
 export interface VirtualCard {
     id: string;
-    last4: string;
-    brand: string;
+    cardNumber: string;
     expiryMonth: string;
     expiryYear: string;
-    cardNumber?: string;
-    cvv?: string;
-    status: 'active' | 'inactive';
+    cvv: string;
+    last4: string;
+    brand: string;
+    status?: 'active' | 'inactive';
 }
 
 export interface Transaction {
@@ -65,4 +65,9 @@ export interface WebhookEvent {
     data: any;
     timestamp: Date;
     signature?: string;
+}
+
+export interface AddCardRequest {
+    card: VirtualCard;
+    paymentTabId: number;
 }
