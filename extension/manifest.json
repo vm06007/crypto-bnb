@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "OnlyBnB - Pay with Crypto on Airbnb and OnlyFans",
+    "name": "PayperPlane - Pay with Crypto on popular travel websites like Airbnb",
     "version": "1.0.0",
-    "description": "Seamlessly pay for your Airbnb and OnlyFans using crypto",
+    "description": "Seamlessly pay for your travel bookings using crypto",
     "permissions": [
         "storage",
         "activeTab",
