@@ -143,16 +143,50 @@
             // Convert from wei to BNB
             const bnbAmount = (parseInt(bnbBalance, 16) / Math.pow(10, 18)).toFixed(6);
 
-            // For ERC-20 tokens, we need the ABI and contract addresses
-            const tokenBalances = {
-                BNB: bnbAmount,
-                ETH: '0.0000', // Coming soon - BSC-pegged ETH
-                USDT: '0.0000', // Coming soon - BSC USDT
-                USDC: '0.0000'  // Coming soon - BSC USDC
+            // BSC Token contract addresses
+            const tokenContracts = {
+                ETH: '0x2170Ed0880ac9A755fd29B2688956BD959F933F8',   // BSC-Peg Ethereum Token
+                USDT: '0x55d398326f99059fF775485246999027B3197955',  // BSC-Peg BUSD-T
+                USDC: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',  // BSC-Peg USD Coin
+                CELO: '0x88eeC49252c8cbc039DCdB394c0c2BA2f1637EA0'  // BSC-Peg Celo Token
             };
 
-            // In a real implementation, you'd call the balanceOf method on each token contract
-            // For now, returning the native BNB balance and zeros for tokens
+            // ERC-20 balanceOf function selector
+            const balanceOfSelector = '0x70a08231';
+
+            // Prepare token balance calls
+            const tokenBalanceCalls = Object.entries(tokenContracts).map(([symbol, address]) => {
+                // Encode the account address for balanceOf(address)
+                const data = balanceOfSelector + account.slice(2).padStart(64, '0');
+                
+                return window.ethereum.request({
+                    method: 'eth_call',
+                    params: [{
+                        to: address,
+                        data: data
+                    }, 'latest']
+                }).then(result => {
+                    // Convert from wei to token amount (assuming 18 decimals for all)
+                    const balance = parseInt(result, 16) / Math.pow(10, 18);
+                    return { symbol, balance: balance.toFixed(6) };
+                }).catch(err => {
+                    // If call fails, return 0
+                    return { symbol, balance: '0.0000' };
+                });
+            });
+
+            // Execute all balance calls in parallel
+            const tokenResults = await Promise.all(tokenBalanceCalls);
+
+            // Build final balances object
+            const tokenBalances = {
+                BNB: bnbAmount
+            };
+
+            // Add token balances
+            tokenResults.forEach(({ symbol, balance }) => {
+                tokenBalances[symbol] = balance;
+            });
 
             responseEvent({
                 success: true,
