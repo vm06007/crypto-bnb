@@ -18,7 +18,7 @@ PayperPlane is a browser extension that enables crypto payments on ANY website t
 3. **Processes crypto payment** and generates virtual card in parallel
 4. **Completes payment** without card input needed
 
-**The Magic**: Any website with payment forms becomes crypto-compatible instantly!
+**The Magic**: Any website with card payment forms becomes crypto-compatible instantly!
 
 ## 🏗️ Architecture
 
