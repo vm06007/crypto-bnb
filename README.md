@@ -11,12 +11,36 @@ PayperPlane is a revolutionary browser extension that bridges the gap between cr
 - **Geographic restrictions** limit access to certain payment methods
 - **Privacy concerns** with sharing financial data online
 
+![The Pain Point - Traditional Card Payments vs Crypto Payments](slides/pain.jpg)
+
+*The frustration of traditional card payments vs. the ease of crypto payments with PayperPlane*
+
 ### Our Solution
 A seamless browser extension that:
 - **Detects payment forms** automatically on any e-commerce site
 - **Converts crypto to fiat** instantly in the background
 - **Issues virtual cards** on-demand for each transaction
 - **Works everywhere** - no merchant integration required
+
+## 📸 How PayperPlane Works
+
+<div align="center">
+
+### The PayperPlane Journey
+
+| **Step 1: Extension Off** | **Step 2: Traditional Banking** | **Step 3: Blockchain Integration** |
+|:---:|:---:|:---:|
+| ![Extension Off](slides/01-off.png) | ![Banking System](slides/02-bank.png) | ![Blockchain](slides/03-blockchain.png) |
+| *Extension detects payment forms* | *Traditional banking limitations* | *Blockchain-powered solution* |
+
+| **Step 4: API Integration** | **Step 5: Seamless Payment** |
+|:---:|:---:|
+| ![API Integration](slides/04-api.png) | ![Payment Complete](slides/05-on.png) |
+| *Smart contract & API integration* | *Crypto payment successful* |
+
+</div>
+
+*Visual representation of how PayperPlane transforms the payment experience from traditional banking to seamless crypto payments*
 
 ## 🏗️ Architecture Overview
 
