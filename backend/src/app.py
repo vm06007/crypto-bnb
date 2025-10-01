@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional
 import requests
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import APIKeyHeader
+from fastapi.middleware.cors import CORSMiddleware
 from lithic import Lithic
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -316,6 +317,13 @@ class SimulateResponse(BaseModel):
 
 
 app = FastAPI(title="PayperPlane Backend")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event("startup")
