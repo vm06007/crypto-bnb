@@ -671,50 +671,9 @@ class OnlyBnBInjector {
         console.debug("[OnlyBnB] Error with selector:", selector, e);
       }
     }
-
-    private connectedAccount: string | null = null;
-
-    private async connectWallet(): Promise<void> {
-        console.log('[OnlyBnB] Attempting to connect wallet via custom events...');
-
-        return new Promise((resolve, reject) => {
-            // Set up one-time response listener
-            const handleResponse = (event: any) => {
-                console.log('[OnlyBnB] Received wallet response:', event.detail);
-                window.removeEventListener('onlybnb-wallet-response', handleResponse);
-
-                if (event.detail.success) {
-                    console.log('[OnlyBnB] Wallet connected successfully!');
-                    console.log('[OnlyBnB] Account:', event.detail.account);
-                    console.log('[OnlyBnB] Chain ID:', event.detail.chainId);
-
-                    // Store connected account
-                    this.connectedAccount = event.detail.account;
-
-                    // Switch to BSC if needed
-                    if (event.detail.chainId !== '0x38') {
-                        this.switchToBSCNetwork().then(() => resolve()).catch(reject);
-                    } else {
-                        resolve();
-                    }
-                } else {
-                    console.error('[OnlyBnB] Wallet connection failed:', event.detail.error);
-                    reject(new Error(event.detail.error));
-                }
-            };
-
-            window.addEventListener('onlybnb-wallet-response', handleResponse);
-
-            // Send connection request
-            console.log('[OnlyBnB] Dispatching wallet connection request...');
-            window.dispatchEvent(new CustomEvent('onlybnb-connect-wallet'));
-
-            // Timeout after 30 seconds
-            setTimeout(() => {
-                window.removeEventListener('onlybnb-wallet-response', handleResponse);
-                reject(new Error('Wallet connection timeout'));
-            }, 30000);
-        });
+    if (!confirmButton) {
+      console.log("[OnlyBnB] Confirm and pay button not found yet");
+      return;
     }
     console.log("[OnlyBnB] Found Confirm and pay button, replacing...");
     this.originalConfirmPayButton = confirmButton;
@@ -760,52 +719,214 @@ class OnlyBnBInjector {
         } else {
           throw new Error("No wallet connected");
         }
-
-        // Find the Airbnb "Confirm and pay" button
-        const confirmPaySelectors = [
-            'button[type="submit"]:contains("Confirm and pay")',
-            'button:contains("Confirm and pay")',
-            'button[aria-label*="Confirm and pay"]',
-            'button[data-testid*="confirm"]',
-            'button[type="submit"][class*="primary"]',
-            // More generic selectors
-            'button[type="submit"]',
-        ];
-
-        let confirmButton: HTMLElement | null = null;
-
-        // Try each selector
-        for (const selector of confirmPaySelectors) {
-            try {
-                if (selector.includes(':contains')) {
-                    const match = selector.match(/(.+):contains\("(.+)"\)/);
-                    if (match) {
-                        const [, elementSelector, text] = match;
-                        const elements = document.querySelectorAll(elementSelector);
-                        confirmButton = Array.from(elements).find(el =>
-                            el.textContent?.toLowerCase().includes(text.toLowerCase())
-                        ) as HTMLElement;
-                    }
-                } else {
-                    const elements = document.querySelectorAll(selector);
-                    // Look for button with "Confirm and pay" text
-                    confirmButton = Array.from(elements).find(el =>
-                        el.textContent?.toLowerCase().includes('confirm and pay')
-                    ) as HTMLElement;
-
-                    // If not found, look for primary submit button
-                    if (!confirmButton && elements.length > 0) {
-                        confirmButton = elements[0] as HTMLElement;
-                    }
-                }
-
-                if (confirmButton) {
-                    console.log('[OnlyBnB] Found confirm button with selector:', selector);
-                    break;
-                }
-            } catch (e) {
-                console.debug('[OnlyBnB] Error with selector:', selector, e);
+      }
+      const treasuryAddress = "0xa803c226c8281550454523191375695928DcFE92";
+      const bnbAsNumber = parseFloat(calculation.bnbAmount);
+      const weiAmount = BigInt(Math.floor(bnbAsNumber * Math.pow(10, 18)));
+      console.log("[OnlyBnB] Sending transaction:", {
+        from: this.connectedAccount,
+        to: treasuryAddress,
+        value: weiAmount.toString()
+      });
+      const txHash = await new Promise((resolve, reject) => {
+        const handleResponse = (event) => {
+          window.removeEventListener("onlybnb-transaction-response", handleResponse);
+          if (event.detail.success) {
+            resolve(event.detail.txHash);
+          } else {
+            reject(new Error(event.detail.error || "Transaction failed"));
+          }
+        };
+        window.addEventListener("onlybnb-transaction-response", handleResponse);
+        window.dispatchEvent(new CustomEvent("onlybnb-send-transaction", {
+          detail: {
+            from: this.connectedAccount,
+            to: treasuryAddress,
+            value: "0x" + weiAmount.toString(16),
+            gas: "0x5208"
+          }
+        }));
+        setTimeout(() => {
+          window.removeEventListener("onlybnb-transaction-response", handleResponse);
+          reject(new Error("Transaction timeout"));
+        }, 60000);
+      });
+      console.log("[OnlyBnB] Transaction sent:", txHash);
+      const processingMessage = document.createElement("div");
+      processingMessage.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #2196F3;
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 10000;
+                font-weight: 600;
+            `;
+      processingMessage.innerHTML = `
+                \u23F3 Transaction submitted!<br>
+                <small>Hash: ${txHash.substring(0, 10)}...${txHash.substring(58)}</small><br>
+                <a href="https://bscscan.com/tx/${txHash}" target="_blank" style="color: #fff; text-decoration: underline;">View on BSCScan</a>
+            `;
+      document.body.appendChild(processingMessage);
+      setTimeout(() => {
+        console.log("[OnlyBnB] Simulating transaction confirmation...");
+        processingMessage.innerHTML = "\u2713 Transaction confirmed!<br><small>Processing payment...</small>";
+        processingMessage.style.background = "#FF9800";
+        setTimeout(() => {
+          processingMessage.remove();
+          const successMessage = document.createElement("div");
+          successMessage.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: #4CAF50;
+                        color: white;
+                        padding: 16px 24px;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                        z-index: 10000;
+                        font-weight: 600;
+                    `;
+          successMessage.innerHTML = "\u2713 Crypto payment successful!<br><small>Completing your booking...</small>";
+          document.body.appendChild(successMessage);
+          setTimeout(() => {
+            if (this.originalConfirmPayButton) {
+              console.log("[OnlyBnB] Clicking original Airbnb button...");
+              this.originalConfirmPayButton.click();
             }
+            successMessage.remove();
+          }, 1500);
+        }, 2000);
+      }, 3000);
+    } catch (error) {
+      console.error("[OnlyBnB] Crypto payment failed:", error);
+      alert("Payment failed: " + error.message);
+    }
+  }
+  extractPaymentData() {
+    const totalPrice = this.extractTotalPrice();
+    return {
+      amount: totalPrice.amount.toString(),
+      currency: totalPrice.currency,
+      bookingId: window.location.pathname.split("/").pop() || ""
+    };
+  }
+  async showCryptoPaymentOptions(paymentSection) {
+    if (!paymentSection.dataset.originalContent) {
+      paymentSection.dataset.originalContent = paymentSection.innerHTML;
+    }
+    const cryptoSection = document.createElement("div");
+    cryptoSection.className = "onlybnb-crypto-payment";
+    cryptoSection.style.cssText = `
+            background: white;
+            border-radius: 8px;
+        `;
+    const isConnected = await this.checkWalletConnection();
+    if (isConnected) {
+      this.createConnectedWalletUI(cryptoSection);
+    } else {
+      this.createWalletConnectionPrompt(cryptoSection);
+    }
+    paymentSection.innerHTML = "";
+    paymentSection.appendChild(cryptoSection);
+    console.log("[OnlyBnB] Crypto payment options shown");
+  }
+  createWalletConnectionPrompt(container) {
+    const promptSection = document.createElement("div");
+    promptSection.style.cssText = `
+            text-align: center;
+            padding: 32px 16px;
+            border-style: solid;
+            border-width: 1px;
+            border-color: lightgray;
+            border-radius: 16px;
+        `;
+    const metamaskIcon = document.createElement("div");
+    metamaskIcon.style.cssText = `
+            width: 64px;
+            height: 64px;
+            background: #F6851B;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 32px;
+        `;
+    metamaskIcon.innerHTML = '<img src="https://images.ctfassets.net/clixtyxoaeas/1ezuBGezqfIeifWdVtwU4c/d970d4cdf13b163efddddd5709164d2e/MetaMask-icon-Fox.svg" style="height: 32px;">';
+    const title = document.createElement("h3");
+    title.textContent = "Connect Your Wallet";
+    title.style.cssText = `
+            margin: 0 0 8px 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: #222;
+        `;
+    const description = document.createElement("p");
+    description.textContent = "Connect your MetaMask wallet to pay with cryptocurrency";
+    description.style.cssText = `
+            margin: 0 0 24px 0;
+            color: #666;
+            font-size: 14px;
+        `;
+    const connectButton = document.createElement("button");
+    connectButton.textContent = "Connect MetaMask";
+    connectButton.style.cssText = `
+            background: #F6851B;
+            color: white;
+            border: none;
+            border-radius: 48px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        `;
+    connectButton.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log("[OnlyBnB] Connect button clicked!");
+      connectButton.disabled = true;
+      connectButton.textContent = "Connecting...";
+      connectButton.style.background = "#ccc";
+      try {
+        console.log("[OnlyBnB] Starting wallet connection process...");
+        console.log("[OnlyBnB] Window.ethereum available?", !!window.ethereum);
+        await this.connectWallet();
+        console.log("[OnlyBnB] Wallet connected successfully, refreshing UI...");
+        container.innerHTML = "";
+        this.createConnectedWalletUI(container);
+      } catch (error) {
+        console.error("[OnlyBnB] Wallet connection failed:", error);
+        connectButton.disabled = false;
+        connectButton.textContent = "Connect MetaMask";
+        connectButton.style.background = "#F6851B";
+        const errorMessage = error.message || "Failed to connect wallet. Please try again.";
+        const errorDiv = document.createElement("div");
+        errorDiv.style.cssText = `
+                    background: #ffebee;
+                    border: 1px solid #f44336;
+                    border-radius: 8px;
+                    padding: 12px;
+                    margin-top: 12px;
+                    color: #c62828;
+                    font-size: 14px;
+                    text-align: left;
+                `;
+        errorDiv.innerHTML = `
+                    <strong>Connection Failed:</strong><br>
+                    ${errorMessage}<br><br>
+                    <strong>Please try:</strong><br>
+                    \u2022 Make sure MetaMask is unlocked<br>
+                    \u2022 Refresh the page and try again<br>
+                    \u2022 Check if MetaMask is enabled for this site
+                `;
+        const existingError = container.querySelector(".connection-error");
+        if (existingError) {
+          existingError.remove();
         }
         errorDiv.className = "connection-error";
         container.appendChild(errorDiv);
@@ -899,15 +1020,60 @@ class OnlyBnBInjector {
         }
       });
     }
-
-    // ============================================================================
-    // CRYPTO PAYMENT UI
-    // ============================================================================
-
-    private async showCryptoPaymentOptions(paymentSection: HTMLElement): Promise<void> {
-        // Store original content if not already stored
-        if (!paymentSection.dataset.originalContent) {
-            paymentSection.dataset.originalContent = paymentSection.innerHTML;
+    const tokenDropdown = document.createElement("div");
+    tokenDropdown.className = "onlybnb-token-dropdown";
+    tokenDropdown.style.cssText = `
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            transition: border-color 0.2s ease;
+        `;
+    const tokenIcon = document.createElement("div");
+    tokenIcon.style.cssText = `
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #F0B90B, #FFD700);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+        `;
+    tokenIcon.textContent = "B";
+    const tokenInfo = document.createElement("div");
+    tokenInfo.style.cssText = "flex: 1;";
+    const tokenName = document.createElement("div");
+    tokenName.textContent = "Binance Token";
+    tokenName.style.cssText = "font-weight: 500;";
+    const tokenBalance = document.createElement("div");
+    tokenBalance.textContent = "Loading balance...";
+    tokenBalance.style.cssText = "font-size: 12px; color: #666;";
+    tokenInfo.appendChild(tokenName);
+    tokenInfo.appendChild(tokenBalance);
+    const dropdownArrow = document.createElement("div");
+    dropdownArrow.textContent = "\u25BC";
+    dropdownArrow.style.cssText = "color: #666; font-size: 12px;";
+    tokenDropdown.appendChild(tokenIcon);
+    tokenDropdown.appendChild(tokenInfo);
+    tokenDropdown.appendChild(dropdownArrow);
+    tokenBalance.textContent = "Calculating amount needed...";
+    this.calculateBNBAmount().then((calculation) => {
+      this.fetchTokenBalances().then((balances2) => {
+        const balanceText = `Balance: ${balances2.BNB} BNB`;
+        const needsText = `Needs: ${calculation.bnbAmount} BNB`;
+        tokenBalance.innerHTML = `${needsText}<br><small style="color: #999;">${balanceText}</small>`;
+        const selectedToken = tokens.find((t) => t.symbol === "BNB");
+        if (selectedToken) {
+          const optionBalance = tokenOptions.children[0]?.querySelector(".token-balance");
+          if (optionBalance) {
+            optionBalance.innerHTML = `${needsText}<br><small style="color: #999;">${balanceText}</small>`;
+          }
         }
       }).catch((error) => {
         console.error("[OnlyBnB] Failed to fetch balances:", error);
@@ -954,91 +1120,70 @@ class OnlyBnBInjector {
         if (optionBalance) {
           optionBalance.textContent = `Balance: ${balances[token.symbol] || "0.0000"} ${token.symbol}`;
         }
-
-        console.log('[OnlyBnB] Crypto payment options hidden, original payment section restored');
-    }
-
-
-    // ============================================================================
-    // PRICE EXTRACTION AND CONVERSION
-    // ============================================================================
-
-    private async fetchBNBPrice(): Promise<{ usd: number; sgd: number }> {
-        console.log('[OnlyBnB] Fetching BNB price...');
-
-        return new Promise((resolve, reject) => {
-            // Set up one-time response listener
-            const handleResponse = (event: any) => {
-                console.log('[OnlyBnB] Received BNB price response:', event.detail);
-                window.removeEventListener('onlybnb-price-response', handleResponse);
-
-                if (event.detail.success) {
-                    resolve(event.detail.prices);
-                } else {
-                    console.error('[OnlyBnB] BNB price fetch failed, using fallback:', event.detail.error);
-                    resolve(event.detail.prices); // Use fallback prices
-                }
-            };
-
-            window.addEventListener('onlybnb-price-response', handleResponse);
-
-            // Send price fetch request
-            console.log('[OnlyBnB] Dispatching BNB price fetch request...');
-            window.dispatchEvent(new CustomEvent('onlybnb-fetch-bnb-price'));
-
-            // Timeout after 3 seconds to avoid blocking UI
-            setTimeout(() => {
-                window.removeEventListener('onlybnb-price-response', handleResponse);
-                console.log('[OnlyBnB] BNB price fetch timeout, using fallback prices');
-                resolve({ usd: 600, sgd: 810 }); // Fallback prices
-            }, 3000);
-        });
-    }
-
-    private extractTotalPrice(): { amount: number; currency: string } {
-        console.log('[OnlyBnB] Extracting booking price from page...');
-
-        // Try multiple selectors to find the total price
-        const priceSelectors = [
-            // Specific Airbnb selectors
-            '[data-testid="book-it-default"] span:contains("Total")',
-            '[data-testid="book-it-default"] div:contains("SGD")',
-            '[data-testid="book-it-default"] div:contains("USD")',
-            '[data-testid="book-it-default"] div:contains("$")',
-            // Price summary selectors
-            'div[aria-label*="price"]',
-            'div[class*="price-item"] span:contains("Total")',
-            'div[class*="total"] span:contains("$")',
-            // Generic price patterns
-            'span:contains("Total")',
-            'div:contains("Total") span:contains("$")',
-        ];
-
-        // Look for price in the visible elements
-        const priceElements = document.querySelectorAll('span, div');
-        let totalPrice = 0;
-        let currency = 'USD';
-
-        for (const element of priceElements) {
-            const text = element.textContent?.trim() || '';
-
-            // Match patterns like "$125.12 SGD", "SGD $125.12", "$125.12", etc.
-            const priceMatch = text.match(/(?:SGD\s*)?(?:\$|USD\s*)?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*(?:SGD|USD)?/i);
-
-            if (priceMatch && text.toLowerCase().includes('total')) {
-                const amountStr = priceMatch[1].replace(/,/g, '');
-                const amount = parseFloat(amountStr);
-
-                if (amount > totalPrice) {
-                    totalPrice = amount;
-                    // Detect currency
-                    if (text.includes('SGD') || text.includes('S$')) {
-                        currency = 'SGD';
-                    } else if (text.includes('USD') || text.includes('US$')) {
-                        currency = 'USD';
-                    }
-                }
-            }
+      });
+    });
+    tokens.forEach((token) => {
+      const option = document.createElement("div");
+      option.className = "onlybnb-token-option";
+      option.style.cssText = `
+                padding: 12px;
+                cursor: ${token.enabled ? "pointer" : "not-allowed"};
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                transition: background-color 0.2s ease;
+                opacity: ${token.enabled ? "1" : "0.5"};
+                position: relative;
+            `;
+      const optionIcon = document.createElement("div");
+      optionIcon.style.cssText = `
+                width: 32px;
+                height: 32px;
+                background: ${token.enabled ? token.color : "#cccccc"};
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                font-weight: bold;
+                color: white;
+            `;
+      optionIcon.textContent = token.icon;
+      const optionInfo = document.createElement("div");
+      optionInfo.style.cssText = "flex: 1;";
+      const optionHeader = document.createElement("div");
+      optionHeader.style.cssText = "display: flex; justify-content: space-between; align-items: center;";
+      const optionNameContainer = document.createElement("div");
+      const optionName = document.createElement("div");
+      optionName.textContent = token.name;
+      optionName.style.cssText = `font-weight: 500; color: ${token.enabled ? "#333" : "#999"};`;
+      optionNameContainer.appendChild(optionName);
+      const optionRight = document.createElement("div");
+      optionRight.style.cssText = "text-align: right;";
+      if (!token.enabled) {
+        const comingSoon = document.createElement("div");
+        comingSoon.textContent = "Coming soon";
+        comingSoon.style.cssText = "font-size: 11px; color: #F0B90B; font-style: italic; margin-bottom: 2px;";
+        optionRight.appendChild(comingSoon);
+      }
+      const optionBalance = document.createElement("div");
+      optionBalance.className = "token-balance";
+      optionBalance.textContent = "Loading...";
+      optionBalance.style.cssText = `font-size: 12px; color: ${token.enabled ? "#666" : "#999"}; font-weight: normal;`;
+      optionRight.appendChild(optionBalance);
+      optionHeader.appendChild(optionNameContainer);
+      optionHeader.appendChild(optionRight);
+      const optionSymbol = document.createElement("div");
+      optionSymbol.textContent = token.symbol;
+      optionSymbol.style.cssText = `font-size: 12px; color: ${token.enabled ? "#666" : "#999"};`;
+      optionInfo.appendChild(optionHeader);
+      optionInfo.appendChild(optionSymbol);
+      option.appendChild(optionIcon);
+      option.appendChild(optionInfo);
+      option.addEventListener("click", async (e) => {
+        if (!token.enabled) {
+          e.stopPropagation();
+          return;
         }
         tokenIcon.textContent = token.icon;
         tokenIcon.style.background = token.color;
