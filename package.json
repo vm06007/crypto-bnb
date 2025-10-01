@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun run build:watch",
-    "build:extension": "bun run build-extension.ts"
+    "build:extension": "bun run build-extension.ts",
+    "build": "bun run build:extension && bun generate-icons-from-miner.js"
   },
   "devDependencies": {
     "bun-types": "latest",

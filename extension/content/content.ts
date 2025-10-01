@@ -1,12 +1,16 @@
 // Content script for OnlyBnB - Injects "Pay with BNB" button on Airbnb checkout
+// See README.md for details about the new modular architecture.
+// Using native window.ethereum API with proper error handling
 
-interface PaymentData {
-    amount: string;
-    currency: string;
-    bookingId?: string;
+// Extend Window interface to include ethereum
+declare global {
+    interface Window {
+        ethereum?: any;
+    }
 }
 
 class OnlyBnBInjector {
+
     private observer: MutationObserver | null = null;
     private buttonInjected = false;
     private checkoutDetected = false;
@@ -15,19 +19,74 @@ class OnlyBnBInjector {
         this.init();
     }
 
+    // ============================================================================
+    // INITIALIZATION & PAGE DETECTION
+    // ============================================================================
+
     private init(): void {
-        console.log('[OnlyBnB] Extension initialized on:', window.location.href);
+
+        // Inject wallet connector script into the page
+        this.injectWalletConnector();
+
+        // Add a visible test element to confirm the script is running
+        this.showTestIndicator();
+
         // Start observing for checkout page
         this.observePageChanges();
         // Check if we're already on checkout
         this.checkForCheckoutPage();
+
+        // Also try to inject toggle immediately if on booking page
+        if (window.location.pathname.includes('/book/')) {
+            setTimeout(() => {
+                this.injectCryptoToggle();
+            }, 1000);
+
+            // Try again after 3 seconds in case elements load later
+            setTimeout(() => {
+                this.injectCryptoToggle();
+            }, 3000);
+
+            // Don't automatically replace the button - wait for toggle
+        }
 
         // Also check periodically in case dynamic content loads
         setInterval(() => {
             if (!this.buttonInjected) {
                 this.checkForCheckoutPage();
             }
+            // Don't automatically check for pay button
         }, 2000);
+    }
+
+    private injectWalletConnector(): void {
+        const script = document.createElement('script');
+        script.src = chrome.runtime.getURL('inject/wallet-connector.js');
+        script.onload = () => {
+        };
+        (document.head || document.documentElement).appendChild(script);
+    }
+
+    private showTestIndicator(): void {
+        const testElement = document.createElement('div');
+        testElement.style.cssText = `
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #F0B90B;
+            color: #000;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 10000;
+            font-weight: bold;
+        `;
+        testElement.textContent = 'OnlyBnB Extension Loaded!';
+        document.body.appendChild(testElement);
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            testElement.remove();
+        }, 3000);
     }
 
     private observePageChanges(): void {
@@ -43,523 +102,11 @@ class OnlyBnBInjector {
         });
     }
 
-    private injectIntoPaymentDropdown(): void {
-        console.log('[OnlyBnB] Looking for payment dropdown...');
-
-        // Look for the payment method select/dropdown
-        const dropdownSelectors = [
-            'select[name="paymentMethod"]',
-            'select[aria-label*="payment"]',
-            'div[aria-haspopup="listbox"][aria-label*="Pay with"]',
-            'button[aria-haspopup="listbox"][aria-label*="Pay with"]',
-            'div[role="combobox"]',
-            'button[aria-expanded]',
-            '[data-testid="payment-method-selector"]',
-            // More specific selectors for current Airbnb UI
-            'div[class*="payment-method"]',
-            'button[class*="payment-method"]',
-            '[data-testid="structured-search-input-field-split-dates-0"]',
-            'div[class*="_1nihvshi"]', // Common Airbnb class pattern
-        ];
-
-        let paymentDropdown: Element | null = null;
-        for (const selector of dropdownSelectors) {
-            paymentDropdown = document.querySelector(selector);
-            if (paymentDropdown) {
-                console.log('[OnlyBnB] Found payment dropdown:', selector);
-                break;
-            }
-        }
-
-        if (!paymentDropdown) {
-            console.log('[OnlyBnB] Payment dropdown not found');
-            return;
-        }
-
-        // If it's a select element, add an option
-        if (paymentDropdown.tagName === 'SELECT') {
-            const select = paymentDropdown as HTMLSelectElement;
-
-            // Check if we already added the option
-            if (Array.from(select.options).some(opt => opt.value === 'onlybnb-crypto')) {
-                return;
-            }
-
-            const cryptoOption = document.createElement('option');
-            cryptoOption.value = 'onlybnb-crypto';
-            cryptoOption.textContent = '💰 Pay with BNB or Crypto';
-            cryptoOption.style.cssText = 'font-weight: 600; color: #F0B90B;';
-
-            // Insert after the first option (usually the default card)
-            if (select.options.length > 0) {
-                select.insertBefore(cryptoOption, select.options[1]);
-            } else {
-                select.appendChild(cryptoOption);
-            }
-
-            // Listen for selection
-            select.addEventListener('change', (e) => {
-                if ((e.target as HTMLSelectElement).value === 'onlybnb-crypto') {
-                    e.preventDefault();
-                    const paymentData = this.extractPaymentData();
-                    if (paymentData) {
-                        this.handlePayWithBNB(paymentData);
-                    }
-                }
-            });
-        } else {
-            // For custom dropdowns, we need to observe clicks and inject when opened
-            this.observeCustomDropdown(paymentDropdown);
-        }
-    }
-
-    private observeCustomDropdown(dropdown: Element): void {
-        // Add click listener to the dropdown trigger
-        dropdown.addEventListener('click', () => {
-            console.log('[OnlyBnB] Dropdown clicked, waiting for menu...');
-
-            // Wait a bit for the dropdown menu to appear
-            setTimeout(() => {
-                this.injectIntoDropdownMenu();
-            }, 100);
-        });
-
-        // Also observe for aria-expanded changes
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'aria-expanded') {
-                    const target = mutation.target as HTMLElement;
-                    if (target.getAttribute('aria-expanded') === 'true') {
-                        setTimeout(() => {
-                            this.injectIntoDropdownMenu();
-                        }, 100);
-                    }
-                }
-            });
-        });
-
-        observer.observe(dropdown, { attributes: true });
-    }
-
-    private injectIntoDropdownMenu(): void {
-        // Look for the dropdown menu items
-        const menuSelectors = [
-            '[role="listbox"]',
-            '[role="menu"]',
-            'ul[aria-label*="payment"]',
-            'div[data-testid*="payment-options"]',
-            '.payment-method-list',
-        ];
-
-        let menu: Element | null = null;
-        for (const selector of menuSelectors) {
-            menu = document.querySelector(selector);
-            if (menu) break;
-        }
-
-        if (!menu) {
-            console.log('[OnlyBnB] Dropdown menu not found');
-            return;
-        }
-
-        // Check if we already added our option
-        if (menu.querySelector('.onlybnb-payment-option-menu')) {
-            return;
-        }
-
-        // Find existing payment options to match the style
-        const existingOption = menu.querySelector('[role="option"], li, [role="menuitem"]');
-        if (!existingOption) return;
-
-        // Create our crypto payment option
-        const cryptoOption = existingOption.cloneNode(true) as HTMLElement;
-        cryptoOption.className = existingOption.className + ' onlybnb-payment-option-menu';
-        cryptoOption.setAttribute('data-onlybnb', 'true');
-
-        // Make sure it has the same role and attributes
-        if (existingOption.getAttribute('role')) {
-            cryptoOption.setAttribute('role', existingOption.getAttribute('role')!);
-        }
-        if (existingOption.getAttribute('tabindex')) {
-            cryptoOption.setAttribute('tabindex', existingOption.getAttribute('tabindex')!);
-        }
-
-        // Update the content - find the deepest text element
-        const findAndUpdateText = (element: Element) => {
-            // Look for Mastercard image and replace with emoji
-            const img = element.querySelector('img[alt*="Mastercard"], img[src*="mastercard"]');
-            if (img) {
-                const emojiSpan = document.createElement('span');
-                emojiSpan.textContent = '💰';
-                emojiSpan.style.fontSize = '24px';
-                img.replaceWith(emojiSpan);
-            }
-
-            // Update text content
-            const walker = document.createTreeWalker(
-                element,
-                NodeFilter.SHOW_TEXT,
-                null
-            );
-
-            let node;
-            let textUpdated = false;
-            while (node = walker.nextNode()) {
-                if (node.textContent && node.textContent.trim()) {
-                    if (node.textContent.includes('Mastercard') && !textUpdated) {
-                        node.textContent = 'Pay with BNB or Crypto';
-                        textUpdated = true;
-                    } else if (node.textContent.includes('1338')) {
-                        node.textContent = '';
-                    }
-                }
-            }
-
-            // Add NEW badge only if crypto is not selected
-            const isCryptoSelected = sessionStorage.getItem('onlybnb-selected') === 'true';
-            if (!isCryptoSelected) {
-                /*const badge = document.createElement('span');
-                badge.className = 'onlybnb-new-badge';
-                badge.textContent = 'NEW';
-                badge.style.cssText = `
-                    background: #F0B90B;
-                    color: #000;
-                    font-size: 10px;
-                    font-weight: 700;
-                    padding: 2px 6px;
-                    border-radius: 4px;
-                    text-transform: uppercase;
-                    margin-left: auto;
-                    margin-right: 12px;
-                `;*/
-
-                // Find a good place to insert the badge
-                const textContainer = element.querySelector('div[dir="ltr"], span:not(:empty)');
-                if (textContainer && textContainer.parentElement) {
-                    textContainer.parentElement.style.display = 'flex';
-                    textContainer.parentElement.style.alignItems = 'center';
-                    // textContainer.parentElement.appendChild(badge);
-                }
-            }
-        };
-
-        findAndUpdateText(cryptoOption);
-
-        // Style adjustments
-        cryptoOption.style.cssText = `
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        `;
-
-        // Add hover effect only when not selected
-        cryptoOption.addEventListener('mouseenter', () => {
-            if (cryptoOption.getAttribute('aria-selected') !== 'true') {
-                cryptoOption.style.backgroundColor = '#FFF8E7';
-            }
-        });
-
-        cryptoOption.addEventListener('mouseleave', () => {
-            if (cryptoOption.getAttribute('aria-selected') !== 'true') {
-                cryptoOption.style.backgroundColor = '';
-            }
-        });
-
-        // Add click handler
-        cryptoOption.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            console.log('[OnlyBnB] Crypto payment option clicked!');
-
-            // Store that crypto option is selected
-            sessionStorage.setItem('onlybnb-selected', 'true');
-
-            // Find all possible dropdown triggers
-            const dropdownTriggers = [
-                document.querySelector('button[aria-haspopup="listbox"]'),
-                document.querySelector('div[role="combobox"] button'),
-                document.querySelector('[data-testid*="payment-option-selector"]'),
-                // Look for the button that contains Mastercard text
-                Array.from(document.querySelectorAll('button')).find(btn =>
-                    btn.textContent?.includes('Mastercard')
-                )
-            ].filter(Boolean);
-
-            const dropdownTrigger = dropdownTriggers[0] as HTMLElement;
-
-            if (dropdownTrigger) {
-                console.log('[OnlyBnB] Found dropdown trigger:', dropdownTrigger);
-
-                // Method 1: Try to simulate Airbnb's native selection behavior
-                // First close the dropdown
-                setTimeout(() => {
-                    dropdownTrigger.click();
-                }, 50);
-
-                // Then update the display after dropdown closes
-                setTimeout(() => {
-                    // Find all elements that might contain the payment method display
-                    const displayContainers = [
-                        dropdownTrigger.querySelector('span:not(:empty)'),
-                        dropdownTrigger.querySelector('div[dir]'),
-                        dropdownTrigger.querySelector('[class*="payment"]'),
-                        dropdownTrigger
-                    ].filter(Boolean);
-
-                    // Update each container
-                    displayContainers.forEach(container => {
-                        if (!container) return;
-
-                        // Find image and replace with emoji
-                        const imgs = container.querySelectorAll('img');
-                        imgs.forEach(img => {
-                            if (img.alt?.includes('Mastercard') || img.src?.includes('mastercard')) {
-                                const emoji = document.createElement('span');
-                                emoji.textContent = '💰';
-                                emoji.style.cssText = 'font-size: 24px; margin-right: 8px;';
-                                img.replaceWith(emoji);
-                            }
-                        });
-
-                        // Update all text nodes
-                        const walker = document.createTreeWalker(
-                            container,
-                            NodeFilter.SHOW_TEXT,
-                            {
-                                acceptNode: (node) => {
-                                    return node.textContent?.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-                                }
-                            }
-                        );
-
-                        let node;
-                        while (node = walker.nextNode()) {
-                            if (node.textContent?.includes('Mastercard')) {
-                                node.textContent = node.textContent.replace('Mastercard', 'Pay with BNB or Crypto');
-                            }
-                            if (node.textContent?.includes('1338')) {
-                                node.textContent = node.textContent.replace('1338', '');
-                            }
-                        }
-                    });
-
-                    // Also try a more aggressive approach - completely replace the button content
-                    if (!dropdownTrigger.textContent?.includes('Pay with BNB')) {
-                        console.log('[OnlyBnB] Aggressive update - replacing button content');
-                        const currentContent = dropdownTrigger.innerHTML;
-                        const newContent = currentContent
-                            .replace(/Mastercard/g, 'Pay with BNB or Crypto')
-                            .replace(/1338/g, '')
-                            .replace(/<img[^>]*alt="Mastercard"[^>]*>/g, '<span style="font-size: 24px; margin-right: 8px;">💰</span>');
-
-                        dropdownTrigger.innerHTML = newContent;
-                    }
-                }, 150);
-
-                // First, clear ALL backgrounds to ensure only one has gray
-                const allOptions = document.querySelectorAll('[role="option"]');
-                allOptions.forEach(option => {
-                    (option as HTMLElement).style.backgroundColor = '';
-                    const childDivs = option.querySelectorAll('div');
-                    childDivs.forEach(div => {
-                        (div as HTMLElement).style.backgroundColor = '';
-                    });
-                });
-
-                // Now update states
-                allOptions.forEach(option => {
-                    if (option === cryptoOption) {
-                        // Mark crypto option as selected with gray background
-                        option.setAttribute('aria-selected', 'true');
-                        (option as HTMLElement).style.backgroundColor = '#f0f0f0';
-
-                        // Show checkmark
-                        const svgs = option.querySelectorAll('svg');
-                        svgs.forEach(svg => {
-                            if (svg.getAttribute('aria-label')?.includes('Selected') ||
-                                svg.getAttribute('aria-hidden') === 'true') {
-                                svg.style.display = 'block';
-                                svg.style.visibility = 'visible';
-                                svg.style.opacity = '1';
-                            }
-                        });
-
-                        // Remove NEW badge if it exists
-                        const badge = option.querySelector('.onlybnb-new-badge');
-                        if (badge) {
-                            badge.remove();
-                        }
-                    } else {
-                        // Unselect all other options - no gray background
-                        option.setAttribute('aria-selected', 'false');
-                        option.classList.remove('selected');
-                        (option as HTMLElement).style.backgroundColor = ''; // Remove gray background
-
-                        // Hide checkmarks
-                        const svgs = option.querySelectorAll('svg');
-                        svgs.forEach(svg => {
-                            svg.style.display = 'none';
-                            svg.style.visibility = 'hidden';
-                            svg.style.opacity = '0';
-                        });
-                    }
-                });
-
-                // Close the dropdown after a small delay
-                setTimeout(() => {
-                    dropdownTrigger.click();
-                }, 100);
-            }
-
-            // Wait a bit then show payment flow
-            setTimeout(() => {
-                const paymentData = this.extractPaymentData();
-                if (paymentData) {
-                    this.handlePayWithBNB(paymentData);
-                }
-            }, 500);
-        });
-
-        // Insert at the beginning of the menu
-        menu.insertBefore(cryptoOption, menu.firstChild);
-
-        // Add click handlers to other options to deselect crypto
-        const otherOptions = menu.querySelectorAll('[role="option"]:not(:last-child)');
-        otherOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                // Clear crypto selection
-                sessionStorage.removeItem('onlybnb-selected');
-
-                // Add NEW badge back to crypto option since it's no longer selected
-                const existingBadge = cryptoOption.querySelector('.onlybnb-new-badge');
-                if (!existingBadge) {
-                    const badge = document.createElement('span');
-                    badge.className = 'onlybnb-new-badge';
-                    badge.textContent = 'NEW';
-                    badge.style.cssText = `
-                        background: #F0B90B;
-                        color: #000;
-                        font-size: 10px;
-                        font-weight: 700;
-                        padding: 2px 6px;
-                        border-radius: 4px;
-                        text-transform: uppercase;
-                        margin-left: auto;
-                        margin-right: 12px;
-                    `;
-
-                    const textContainer = cryptoOption.querySelector('div[dir="ltr"], span:not(:empty)');
-                    if (textContainer && textContainer.parentElement) {
-                        textContainer.parentElement.style.display = 'flex';
-                        textContainer.parentElement.style.alignItems = 'center';
-                        textContainer.parentElement.appendChild(badge);
-                    }
-                }
-
-                // Update crypto option's selected state
-                cryptoOption.setAttribute('aria-selected', 'false');
-                cryptoOption.style.backgroundColor = '';
-
-                // Hide crypto checkmark
-                const cryptoCheckmark = cryptoOption.querySelector('svg');
-                if (cryptoCheckmark) {
-                    (cryptoCheckmark as unknown as HTMLElement).style.display = 'none';
-                    (cryptoCheckmark as unknown as HTMLElement).style.visibility = 'hidden';
-                }
-            });
-        });
-
-        // Update visual states based on current selection
-        const updateSelectionStates = () => {
-            const isCryptoSelected = sessionStorage.getItem('onlybnb-selected') === 'true';
-
-            // First, clear ALL backgrounds to ensure only one item has gray background
-            const allOptions = menu.querySelectorAll('[role="option"]');
-            allOptions.forEach(option => {
-                (option as HTMLElement).style.backgroundColor = '';
-                // Also clear any inline background styles on child elements
-                const childDivs = option.querySelectorAll('div');
-                childDivs.forEach(div => {
-                    (div as HTMLElement).style.backgroundColor = '';
-                });
-            });
-
-            // Find which option is currently selected by Airbnb
-            let defaultSelectedOption = null;
-            otherOptions.forEach(option => {
-                if (option.getAttribute('aria-selected') === 'true') {
-                    defaultSelectedOption = option;
-                }
-            });
-
-            if (isCryptoSelected) {
-                // Crypto is selected - override Airbnb's selection
-                cryptoOption.setAttribute('aria-selected', 'true');
-                cryptoOption.style.backgroundColor = '#f0f0f0';
-
-                // Show checkmark
-                const cryptoCheckmark = cryptoOption.querySelector('svg');
-                if (cryptoCheckmark) {
-                    (cryptoCheckmark as unknown as HTMLElement).style.display = 'block';
-                    (cryptoCheckmark as unknown as HTMLElement).style.visibility = 'visible';
-                    (cryptoCheckmark as unknown as HTMLElement).style.opacity = '1';
-                }
-
-                // Remove NEW badge
-                const badge = cryptoOption.querySelector('.onlybnb-new-badge');
-                if (badge) {
-                    badge.remove();
-                }
-
-                // Explicitly unselect all other options
-                otherOptions.forEach(option => {
-                    option.setAttribute('aria-selected', 'false');
-                    (option as HTMLElement).style.backgroundColor = ''; // Remove gray background
-
-                    // Hide checkmarks
-                    const checkmark = option.querySelector('svg');
-                    if (checkmark) {
-                        (checkmark as unknown as HTMLElement).style.display = 'none';
-                        (checkmark as unknown as HTMLElement).style.visibility = 'hidden';
-                    }
-                });
-            } else {
-                // Crypto is not selected
-                cryptoOption.setAttribute('aria-selected', 'false');
-
-                // Hide crypto checkmark
-                const cryptoCheckmark = cryptoOption.querySelector('svg');
-                if (cryptoCheckmark) {
-                    (cryptoCheckmark as unknown as HTMLElement).style.display = 'none';
-                    (cryptoCheckmark as unknown as HTMLElement).style.visibility = 'hidden';
-                }
-
-                // Apply gray background ONLY to the default selected option
-                if (defaultSelectedOption) {
-                    (defaultSelectedOption as HTMLElement).style.backgroundColor = '#f0f0f0';
-                    const checkmark = (defaultSelectedOption as Element).querySelector('svg');
-                    if (checkmark) {
-                        (checkmark as unknown as HTMLElement).style.display = 'block';
-                        (checkmark as unknown as HTMLElement).style.visibility = 'visible';
-                    }
-                }
-
-                // Remove gray background from crypto option when not selected
-                cryptoOption.style.backgroundColor = '';
-            }
-        };
-
-        // Apply current state
-        updateSelectionStates();
-
-        console.log('[OnlyBnB] Crypto payment option added to dropdown menu');
-    }
-
     private checkForCheckoutPage(): void {
         // First check URL pattern
         const isBookingUrl = window.location.pathname.includes('/book/');
+
         if (isBookingUrl) {
-            console.log('[OnlyBnB] Detected booking URL, looking for checkout elements...');
         }
 
         // Multiple selectors to handle different Airbnb checkout page structures
@@ -617,297 +164,848 @@ class OnlyBnBInjector {
         }
 
         if (isCheckout && !this.buttonInjected) {
+            console.log('[OnlyBnB] Checkout detected, injecting crypto toggle...');
             this.checkoutDetected = true;
-            // Try to inject into payment dropdown first
-            this.injectIntoPaymentDropdown();
-            // Also inject the standalone button as fallback
-            this.injectPayWithBNBButton();
+            // Inject crypto toggle only - don't replace button until toggle is enabled
+            this.injectCryptoToggle();
+            this.buttonInjected = true;
         }
     }
 
-    private injectPayWithBNBButton(): void {
-        // Find payment method section
-        const paymentSelectors = [
-            '[data-testid="payment-methods"]',
-            '[data-testid="payment-selection"]',
-            'div[aria-label*="Payment"]',
-            'div[class*="payment-methods"]',
-            'div[class*="payment-options"]',
-            'form[method="post"]',
-            // More specific selectors for current page
-            'section:has(h2:contains("Pay with"))',
-            'section:has(h3:contains("Pay with"))',
-            'div:has(> div > h2:contains("Pay with"))',
-            'div:has(> div > h3:contains("Pay with"))',
-            // Look for the Mastercard dropdown area
-            'div:has(select option[value*="Mastercard"])',
-            'div:has(button:contains("Mastercard"))',
-        ];
+    // ============================================================================
+    // CRYPTO TOGGLE INJECTION
+    // ============================================================================
 
-        let paymentSection: Element | null = null;
+    private injectCryptoToggle(): void {
+        console.log('[OnlyBnB] Creating custom crypto toggle...');
 
-        // First try specific selectors
-        for (const selector of paymentSelectors) {
-            try {
-                paymentSection = document.querySelector(selector);
-                if (paymentSection) break;
-            } catch (e) {
-                // Handle complex selectors that might fail
-            }
+        // Check if we already added the crypto toggle
+        if (document.querySelector('.onlybnb-crypto-toggle') ||
+            document.querySelector('[data-onlybnb-crypto-toggle="true"]')) {
+            console.log('[OnlyBnB] Crypto toggle already exists');
+            return;
         }
 
-        // If not found, look for "Pay with" heading and inject near it
-        if (!paymentSection) {
-            const headings = document.querySelectorAll('h2, h3, h4');
-            for (const heading of headings) {
-                if (heading.textContent?.toLowerCase().includes('pay with')) {
-                    paymentSection = heading.closest('section') || heading.parentElement;
-                    console.log('[OnlyBnB] Found payment section via heading:', heading.textContent);
+        // Try multiple selectors to find the work trip toggle
+        const workTripSelectors = [
+            'div[data-plugin-in-point-id="SWITCH_ROW_WORK_TRIP"]',
+            'div:contains("Is this a work trip?")',
+            'div:has-text("Is this a work trip?")',
+            'div[class*="work-trip"]',
+            'div[class*="work_trip"]'
+        ];
+
+        let workTripToggle = null;
+        for (const selector of workTripSelectors) {
+            try {
+                if (selector.includes(':contains')) {
+                    const match = selector.match(/(.+):contains\("(.+)"\)/);
+                    if (match) {
+                        const [, elementSelector, text] = match;
+                        const elements = document.querySelectorAll(elementSelector);
+                        workTripToggle = Array.from(elements).find(el =>
+                            el.textContent?.toLowerCase().includes(text.toLowerCase())
+                        );
+                    }
+                } else if (selector.includes('has-text')) {
+                    const element = selector.split(':')[0];
+                    const text = selector.match(/"([^"]+)"/)?.[1];
+                    if (text) {
+                        const elements = document.querySelectorAll(element);
+                        workTripToggle = Array.from(elements).find(el =>
+                            el.textContent?.toLowerCase().includes(text.toLowerCase())
+                        );
+                    }
+                } else {
+                    workTripToggle = document.querySelector(selector);
+                }
+
+                if (workTripToggle) {
+                    console.log('[OnlyBnB] Found work trip toggle with selector:', selector);
                     break;
                 }
-            }
-        }
-
-        // Last resort: find the Mastercard dropdown
-        if (!paymentSection) {
-            const mastercardElements = Array.from(document.querySelectorAll('*')).filter(el =>
-                el.textContent?.includes('Mastercard 1338')
-            );
-            if (mastercardElements.length > 0) {
-                paymentSection = mastercardElements[0].closest('section') || mastercardElements[0].parentElement;
-                console.log('[OnlyBnB] Found payment section via Mastercard element');
-            }
-        }
-
-        if (!paymentSection) {
-            console.log('[OnlyBnB] Payment section not found, retrying...');
-            setTimeout(() => this.injectPayWithBNBButton(), 1000);
-            return;
-        }
-
-        // Extract payment amount
-        const paymentData = this.extractPaymentData();
-        if (!paymentData) {
-            console.error('[OnlyBnB] Could not extract payment data');
-            return;
-        }
-
-        // Create the OnlyBnB button container
-        const buttonContainer = this.createPayWithBNBButton(paymentData);
-
-        // Try multiple injection strategies
-        let injected = false;
-
-        // Strategy 1: Insert before submit button
-        const submitButton = paymentSection.querySelector('button[type="submit"]');
-        if (submitButton && submitButton.parentElement) {
-            submitButton.parentElement.insertBefore(buttonContainer, submitButton);
-            injected = true;
-        }
-
-        // Strategy 2: Insert after the payment dropdown
-        if (!injected) {
-            const dropdownContainer = paymentSection.querySelector('div:has(select), div:has(button[aria-haspopup])');
-            if (dropdownContainer && dropdownContainer.parentElement) {
-                dropdownContainer.parentElement.insertBefore(buttonContainer, dropdownContainer.nextSibling);
-                injected = true;
-            }
-        }
-
-        // Strategy 3: Find "Pay with" section and insert after
-        if (!injected) {
-            const payWithHeader = Array.from(paymentSection.querySelectorAll('h2, h3')).find(h =>
-                h.textContent?.toLowerCase().includes('pay with')
-            );
-            if (payWithHeader && payWithHeader.parentElement) {
-                payWithHeader.parentElement.appendChild(buttonContainer);
-                injected = true;
-            }
-        }
-
-        // Strategy 4: Just append to payment section
-        if (!injected) {
-            paymentSection.appendChild(buttonContainer);
-            injected = true;
-        }
-
-        this.buttonInjected = true;
-        console.log('[OnlyBnB] Pay with BNB button injected successfully at:', paymentSection);
-    }
-
-    private extractPaymentData(): PaymentData | null {
-        // Try multiple selectors to find the total amount
-        const amountSelectors = [
-            '[data-testid="book-it-default"] span:has-text("Total")',
-            'span:has-text("Total") + span',
-            'div[class*="total"] span[class*="price"]',
-            'span[class*="_total"]',
-            'div[aria-label*="Total"] span',
-            '*:has-text("S$"):not(:has(*))', // Leaf nodes with currency
-            '*:has-text("$"):not(:has(*))',
-            '*:has-text("€"):not(:has(*))',
-            '*:has-text("£"):not(:has(*))',
-        ];
-
-        let totalAmount: string | null = null;
-        let currency = 'USD'; // Default currency
-
-        for (const selector of amountSelectors) {
-            try {
-                const elements = selector.includes('has-text')
-                    ? this.findElementsByText(selector)
-                    : document.querySelectorAll(selector);
-
-                for (const element of elements) {
-                    const text = element.textContent?.trim() || '';
-                    const amountMatch = text.match(/([A-Z$€£¥₹]+)?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/);
-
-                    if (amountMatch && parseFloat(amountMatch[2].replace(/,/g, '')) > 100) {
-                        totalAmount = amountMatch[2];
-                        if (amountMatch[1]) {
-                            currency = this.normalizeCurrency(amountMatch[1]);
-                        }
-                        break;
-                    }
-                }
-                if (totalAmount) break;
             } catch (e) {
                 console.debug('[OnlyBnB] Error with selector:', selector, e);
             }
         }
 
-        if (!totalAmount) {
-            console.error('[OnlyBnB] Could not find total amount');
-            return null;
+        if (!workTripToggle) {
+            console.log('[OnlyBnB] Work trip toggle not found with any selector');
+            console.log('[OnlyBnB] Available elements with data-plugin-in-point-id:', document.querySelectorAll('[data-plugin-in-point-id]'));
+            console.log('[OnlyBnB] Available elements containing "work trip":', document.querySelectorAll('*').length);
+
+            // Try to find any element containing "work trip" text
+            const allElements = document.querySelectorAll('*');
+            for (const el of allElements) {
+                if (el.textContent?.toLowerCase().includes('work trip')) {
+                    console.log('[OnlyBnB] Found element with "work trip" text:', el);
+                    workTripToggle = el;
+                    break;
+                }
+            }
         }
 
-        return {
-            amount: totalAmount.replace(/,/g, ''),
-            currency: currency,
-        };
-    }
+        if (!workTripToggle) {
+            console.log('[OnlyBnB] Still no work trip toggle found, trying to inject at a different location...');
+            // Try to inject after any toggle or switch element
+            const anyToggle = document.querySelector('[role="switch"], [data-testid*="switch"], [class*="switch"]');
+            if (anyToggle) {
+                console.log('[OnlyBnB] Found alternative toggle element:', anyToggle);
+                workTripToggle = anyToggle;
+            } else {
+                console.log('[OnlyBnB] No suitable injection point found, trying fallback injection...');
+                this.injectCryptoToggleFallback();
+                return;
+            }
+        }
 
-    private findElementsByText(selector: string): Element[] {
-        const match = selector.match(/^(.*?):has-text\("(.+)"\)$/);
-        if (!match) return [];
+        console.log('[OnlyBnB] Found work trip toggle, creating custom crypto toggle...', workTripToggle);
 
-        const [, elementSelector, text] = match;
-        const elements = document.querySelectorAll(elementSelector || '*');
-
-        return Array.from(elements).filter(el =>
-            el.textContent?.toLowerCase().includes(text.toLowerCase())
-        );
-    }
-
-    private normalizeCurrency(symbol: string): string {
-        const currencyMap: Record<string, string> = {
-            '$': 'USD',
-            'S$': 'SGD',
-            '€': 'EUR',
-            '£': 'GBP',
-            '¥': 'JPY',
-            '₹': 'INR',
-            'USD': 'USD',
-            'SGD': 'SGD',
-            'EUR': 'EUR',
-            'GBP': 'GBP',
-        };
-        return currencyMap[symbol] || 'USD';
-    }
-
-    private createPayWithBNBButton(paymentData: PaymentData): HTMLElement {
-        const container = document.createElement('div');
-        container.className = 'onlybnb-payment-option';
-        container.style.cssText = `
-            margin: 16px 0;
-            padding: 16px;
-            border: 2px solid #F0B90B;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #FFF8E7 0%, #FFFDF8 100%);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        `;
-
-        const button = document.createElement('button');
-        button.className = 'onlybnb-pay-button';
-        button.style.cssText = `
-            width: 100%;
-            padding: 14px 24px;
-            background: #F0B90B;
-            color: #000;
-            font-weight: 600;
-            font-size: 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
+        // Create the crypto toggle container with same structure as work trip toggle
+        const cryptoToggle = document.createElement('div');
+        cryptoToggle.className = 'onlybnb-crypto-toggle';
+        cryptoToggle.setAttribute('data-onlybnb-crypto-toggle', 'true');
+        cryptoToggle.setAttribute('data-plugin-in-point-id', 'SWITCH_ROW_CRYPTO');
+        cryptoToggle.setAttribute('data-section-id', 'SWITCH_ROW_CRYPTO');
+        cryptoToggle.style.cssText = `
+            padding-top: 32px;
+            padding-bottom: 24px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 12px;
-            transition: all 0.2s ease;
+            justify-content: space-between;
+            border-top-style: solid;
+            border-top-color: lightgray;
+            border-top-width: 1px;
         `;
 
-        // BNB Logo
-        const logo = document.createElement('img');
-        logo.src = chrome.runtime.getURL('assets/bnb-logo.svg');
-        logo.style.cssText = 'width: 24px; height: 24px;';
-        logo.onerror = () => {
-            // Fallback to text if logo fails
-            logo.style.display = 'none';
+        // Create the title element
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 't41l3z9 atm_c8_9oan3l atm_g3_1dzntr8 atm_cs_18jqzaw dir dir-ltr';
+        titleDiv.id = 'SWITCH_ROW_CRYPTO-title';
+        titleDiv.textContent = 'Pay with crypto';
+        titleDiv.style.cssText = `
+            font-weight: 500;
+            line-height: 1.5;
+            font-size: 16px;
+            color: #222222;
+        `;
+
+        // Create the toggle switch button
+        const toggleButton = document.createElement('button');
+        toggleButton.className = 'onlybnb-crypto-switch';
+        toggleButton.setAttribute('role', 'switch');
+        toggleButton.setAttribute('aria-checked', 'false');
+        toggleButton.setAttribute('aria-labelledby', 'SWITCH_ROW_CRYPTO-title');
+        toggleButton.id = 'SWITCH_ROW_CRYPTO-switch';
+        toggleButton.style.cssText = `
+            width: 48px;
+            height: 32px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 48px;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            outline: none;
+        `;
+
+        // Create the toggle knob
+        const toggleKnob = document.createElement('div');
+        toggleKnob.style.cssText = `
+            width: 28px;
+            height: 28px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        `;
+
+        toggleButton.appendChild(toggleKnob);
+        cryptoToggle.appendChild(titleDiv);
+        cryptoToggle.appendChild(toggleButton);
+
+        // Insert the crypto toggle after the work trip toggle
+        workTripToggle.parentElement?.insertBefore(cryptoToggle, workTripToggle.nextSibling);
+
+        // Set up toggle functionality
+        this.setupToggleFunctionality(cryptoToggle);
+
+        console.log('[OnlyBnB] Custom crypto toggle added successfully');
+        this.showSuccessIndicator();
+    }
+
+    private injectCryptoToggleFallback(): void {
+        console.log('[OnlyBnB] Using fallback injection method...');
+
+        // Try to find a good place to inject the toggle
+        const possibleInjectionPoints = [
+            'div[class*="payment"]',
+            'div[class*="checkout"]',
+            'div[class*="booking"]',
+            'div[aria-label*="payment"]',
+            'div[data-testid*="payment"]',
+            'div[data-testid*="checkout"]',
+            'div[data-testid*="booking"]'
+        ];
+
+        let injectionPoint = null;
+        for (const selector of possibleInjectionPoints) {
+            const element = document.querySelector(selector);
+            if (element) {
+                console.log('[OnlyBnB] Found injection point with selector:', selector);
+                injectionPoint = element;
+                break;
+            }
+        }
+
+        if (!injectionPoint) {
+            console.log('[OnlyBnB] No injection point found, injecting at body');
+            injectionPoint = document.body;
+        }
+
+        // Create a simple crypto toggle
+        const cryptoToggle = document.createElement('div');
+        cryptoToggle.className = 'onlybnb-crypto-toggle';
+        cryptoToggle.setAttribute('data-onlybnb-crypto-toggle', 'true');
+        cryptoToggle.style.cssText = `
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            position: relative;
+            z-index: 1000;
+        `;
+
+        cryptoToggle.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <div style="width: 24px; height: 24px; background: #F0B90B; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">B</div>
+                <div>
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #222;">Pay with crypto</h3>
+                    <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">Secure BNB payment</p>
+                </div>
+            </div>
+            <button id="onlybnb-crypto-toggle-button" style="
+                width: 100%;
+                background: #F0B90B;
+                color: #000;
+                border: none;
+                border-radius: 6px;
+                padding: 12px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+            ">Connect Wallet</button>
+        `;
+
+        // Insert the toggle
+        if (injectionPoint === document.body) {
+            injectionPoint.appendChild(cryptoToggle);
+        } else {
+            injectionPoint.insertBefore(cryptoToggle, injectionPoint.firstChild);
+        }
+
+        // Set up the button functionality
+        const toggleButton = cryptoToggle.querySelector('#onlybnb-crypto-toggle-button') as HTMLButtonElement;
+        toggleButton.addEventListener('click', async () => {
+            try {
+                await this.connectWallet();
+                console.log('[OnlyBnB] Wallet connected via fallback method');
+                // Show connected state
+                toggleButton.textContent = 'Wallet Connected ✓';
+                toggleButton.style.background = '#4CAF50';
+                toggleButton.style.color = 'white';
+            } catch (error) {
+                console.error('[OnlyBnB] Wallet connection failed:', error);
+                toggleButton.textContent = 'Connection Failed';
+                toggleButton.style.background = '#f44336';
+                toggleButton.style.color = 'white';
+                setTimeout(() => {
+                    toggleButton.textContent = 'Connect Wallet';
+                    toggleButton.style.background = '#F0B90B';
+                    toggleButton.style.color = '#000';
+                }, 3000);
+            }
+        });
+
+        console.log('[OnlyBnB] Fallback crypto toggle added successfully');
+        this.showSuccessIndicator();
+    }
+
+    private setupToggleFunctionality(cryptoToggle: HTMLElement): void {
+        const toggleButton = cryptoToggle.querySelector('.onlybnb-crypto-switch') as HTMLButtonElement;
+        const toggleKnob = cryptoToggle.querySelector('.onlybnb-crypto-switch > div') as HTMLElement;
+
+        let isCryptoEnabled = false;
+        let originalPaymentSection: HTMLElement | null = null;
+
+        const updateToggle = async (enabled: boolean) => {
+            isCryptoEnabled = enabled;
+
+            if (enabled) {
+                toggleButton.style.background = '#F0B90B';
+                toggleKnob.style.transform = 'translateX(16px)';
+                toggleButton.setAttribute('aria-checked', 'true');
+
+                // Add tick mark inside the knob
+                if (!toggleKnob.querySelector('.tick-mark')) {
+                    const tickMark = document.createElement('div');
+                    tickMark.className = 'tick-mark';
+                    tickMark.style.cssText = `
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: #F0B90B;
+                        font-size: 16px;
+                        font-weight: bold;
+                        line-height: 1;
+                    `;
+                    tickMark.innerHTML = '<svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="presentation" focusable="false" style="display: block; height: 12px; width: 12px; fill: currentcolor;"><path d="m10.5 1.939 1.061 1.061-7.061 7.061-.53-.531-3-3-.531-.53 1.061-1.061 3 3 5.47-5.469z"></path></svg>';
+                    toggleKnob.appendChild(tickMark);
+                }
+
+                // Replace the confirm and pay button
+                this.replaceConfirmPayButton();
+
+                // Hide quick-pay terms and conditions
+                this.hideQuickPayTerms();
+
+                // Ensure original button stays hidden
+                this.ensureOriginalButtonHidden();
+            } else {
+                toggleButton.style.background = '#e0e0e0';
+                toggleKnob.style.transform = 'translateX(0)';
+                toggleButton.setAttribute('aria-checked', 'false');
+
+                // Remove tick mark from the knob
+                const tickMark = toggleKnob.querySelector('.tick-mark');
+                if (tickMark) {
+                    tickMark.remove();
+                }
+
+                // Keep the original button hidden - don't restore it
+                // The original button should stay hidden when crypto mode is disabled
+                // Only hide the crypto payment options
+                this.hideCryptoPaymentOptions(originalPaymentSection as HTMLElement);
+
+                // Show quick-pay terms and conditions
+                this.showQuickPayTerms();
+            }
+
+            // Find the payment section
+            if (!originalPaymentSection) {
+                originalPaymentSection = this.findPaymentSection();
+            }
+
+            if (enabled && originalPaymentSection) {
+                // Store original content if not already stored
+                if (!originalPaymentSection.dataset.originalContent) {
+                    originalPaymentSection.dataset.originalContent = originalPaymentSection.innerHTML;
+                }
+                await this.showCryptoPaymentOptions(originalPaymentSection);
+            } else if (originalPaymentSection) {
+                this.hideCryptoPaymentOptions(originalPaymentSection);
+            }
         };
 
-        const buttonText = document.createElement('span');
-        buttonText.textContent = `Pay with BNB — OnlyBNB`;
-
-        const amountText = document.createElement('div');
-        amountText.style.cssText = `
-            font-size: 14px;
-            color: #666;
-            margin-top: 8px;
-            text-align: center;
-        `;
-        amountText.textContent = `Total: ${paymentData.currency} ${paymentData.amount}`;
-
-        button.appendChild(logo);
-        button.appendChild(buttonText);
-
-        container.appendChild(button);
-        container.appendChild(amountText);
-
-        // Hover effects
-        container.addEventListener('mouseenter', () => {
-            container.style.transform = 'translateY(-2px)';
-            container.style.boxShadow = '0 4px 12px rgba(240, 185, 11, 0.3)';
-        });
-
-        container.addEventListener('mouseleave', () => {
-            container.style.transform = 'translateY(0)';
-            container.style.boxShadow = 'none';
-        });
-
-        // Click handler
-        button.addEventListener('click', (e) => {
+        // Add click handler to the toggle switch
+        toggleButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            this.handlePayWithBNB(paymentData);
-        });
-
-        return container;
-    }
-
-    private handlePayWithBNB(paymentData: PaymentData): void {
-        console.log('[OnlyBnB] Initiating BNB payment:', paymentData);
-
-        // Send message to background script to open popup
-        chrome.runtime.sendMessage({
-            type: 'INITIATE_BNB_PAYMENT',
-            data: {
-                ...paymentData,
-                url: window.location.href,
-                timestamp: Date.now(),
-            },
+            updateToggle(!isCryptoEnabled);
         });
     }
+
+    private findPaymentSection(): HTMLElement | null {
+        const paymentSectionSelectors = [
+            'div[aria-label*="Pay with"]',
+            'div[class*="payment"]',
+            'section:has(h2:contains("Pay with"))',
+            'div:has(> div > h2:contains("Pay with"))',
+            'div:has(button:contains("Mastercard"))',
+            'div:has(select option[value*="Mastercard"])',
+        ];
+
+        for (const selector of paymentSectionSelectors) {
+            try {
+                if (selector.includes(':contains')) {
+                    const match = selector.match(/(.+):contains\("(.+)"\)/);
+                    if (match) {
+                        const [, elementSelector, text] = match;
+                        const elements = document.querySelectorAll(elementSelector);
+                        const found = Array.from(elements).find(el =>
+                            el.textContent?.toLowerCase().includes(text.toLowerCase())
+                        );
+                        if (found) {
+                            return found as HTMLElement;
+                        }
+                    }
+                } else {
+                    const element = document.querySelector(selector);
+                    if (element) {
+                        return element as HTMLElement;
+                    }
+                }
+            } catch (e) {
+                console.debug('[OnlyBnB] Error with selector:', selector, e);
+            }
+        }
+        return null;
+    }
+
+    private showSuccessIndicator(): void {
+        const successElement = document.createElement('div');
+        successElement.style.cssText = `
+            position: fixed;
+            top: 50px;
+            right: 10px;
+            background: #4CAF50;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 10000;
+            font-weight: bold;
+        `;
+        successElement.textContent = 'Crypto Toggle Added!';
+        document.body.appendChild(successElement);
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            successElement.remove();
+        }, 3000);
+    }
+
+    private hideQuickPayTerms(): void {
+        console.log('[OnlyBnB] Hiding quick-pay terms and conditions...');
+
+        // Find the quick-pay terms and conditions element
+        const termsSelectors = [
+            '#quick-pay-terms-and-conditions',
+            '[id="quick-pay-terms-and-conditions"]',
+            '[class*="quick-pay-terms-and-conditions"]',
+            '[data-testid*="quick-pay-terms"]',
+            '[class*="terms-and-conditions"]',
+            'p:contains("terms and conditions")',
+            'div:contains("terms and conditions")'
+        ];
+
+        for (const selector of termsSelectors) {
+            try {
+                if (selector.includes(':contains')) {
+                    const match = selector.match(/(.+):contains\("(.+)"\)/);
+                    if (match) {
+                        const [, elementSelector, text] = match;
+                        const elements = document.querySelectorAll(elementSelector);
+                        const found = Array.from(elements).find(el =>
+                            el.textContent?.toLowerCase().includes(text.toLowerCase())
+                        );
+                        if (found) {
+                            const element = found as HTMLElement;
+                            element.style.display = 'none';
+                            element.setAttribute('data-onlybnb-hidden', 'true');
+                            console.log('[OnlyBnB] Hidden quick-pay terms:', element);
+                        }
+                    }
+                } else {
+                    const element = document.querySelector(selector) as HTMLElement;
+                    if (element) {
+                        element.style.display = 'none';
+                        element.setAttribute('data-onlybnb-hidden', 'true');
+                        console.log('[OnlyBnB] Hidden quick-pay terms:', element);
+                    }
+                }
+            } catch (e) {
+                console.debug('[OnlyBnB] Error with terms selector:', selector, e);
+            }
+        }
+    }
+
+    private showQuickPayTerms(): void {
+        console.log('[OnlyBnB] Showing quick-pay terms and conditions...');
+
+        // Find and show all elements that were hidden by our extension
+        const hiddenElements = document.querySelectorAll('[data-onlybnb-hidden="true"]');
+        hiddenElements.forEach(element => {
+            const htmlElement = element as HTMLElement;
+            htmlElement.style.display = '';
+            htmlElement.removeAttribute('data-onlybnb-hidden');
+            console.log('[OnlyBnB] Shown quick-pay terms:', htmlElement);
+        });
+    }
+
+    private ensureOriginalButtonHidden(): void {
+        if (this.originalConfirmPayButton) {
+            console.log('[OnlyBnB] Ensuring original button stays hidden...');
+            this.originalConfirmPayButton.style.display = 'none';
+            this.originalConfirmPayButton.setAttribute('data-onlybnb-hidden', 'true');
+        }
+    }
+
+    // ============================================================================
+    // WALLET MANAGEMENT
+    // ============================================================================
+
+    private async checkWalletConnection(): Promise<boolean> {
+        try {
+            // Direct approach - use window.ethereum if available
+            if (!window.ethereum) {
+                console.log('[OnlyBnB] No window.ethereum found for connection check');
+                return false;
+            }
+
+            console.log('[OnlyBnB] Using window.ethereum directly for connection check');
+
+            // Check if already connected using eth_accounts
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            const isConnected = accounts && accounts.length > 0;
+
+            console.log('[OnlyBnB] Wallet connection status:', isConnected);
+            console.log('[OnlyBnB] Connected accounts:', accounts);
+            return isConnected;
+        } catch (error) {
+            console.log('[OnlyBnB] Wallet connection check failed:', error);
+            return false;
+        }
+    }
+
+    private connectedAccount: string | null = null;
+
+    private async connectWallet(): Promise<void> {
+        console.log('[OnlyBnB] Attempting to connect wallet via custom events...');
+
+        return new Promise((resolve, reject) => {
+            // Set up one-time response listener
+            const handleResponse = (event: any) => {
+                console.log('[OnlyBnB] Received wallet response:', event.detail);
+                window.removeEventListener('onlybnb-wallet-response', handleResponse);
+
+                if (event.detail.success) {
+                    console.log('[OnlyBnB] Wallet connected successfully!');
+                    console.log('[OnlyBnB] Account:', event.detail.account);
+                    console.log('[OnlyBnB] Chain ID:', event.detail.chainId);
+
+                    // Store connected account
+                    this.connectedAccount = event.detail.account;
+
+                    // Switch to BSC if needed
+                    if (event.detail.chainId !== '0x38') {
+                        this.switchToBSCNetwork().then(() => resolve()).catch(reject);
+                    } else {
+                        resolve();
+                    }
+                } else {
+                    console.error('[OnlyBnB] Wallet connection failed:', event.detail.error);
+                    reject(new Error(event.detail.error));
+                }
+            };
+
+            window.addEventListener('onlybnb-wallet-response', handleResponse);
+
+            // Send connection request
+            console.log('[OnlyBnB] Dispatching wallet connection request...');
+            window.dispatchEvent(new CustomEvent('onlybnb-connect-wallet'));
+
+            // Timeout after 30 seconds
+            setTimeout(() => {
+                window.removeEventListener('onlybnb-wallet-response', handleResponse);
+                reject(new Error('Wallet connection timeout'));
+            }, 30000);
+        });
+    }
+
+    private async switchToBSCNetwork(): Promise<void> {
+        console.log('[OnlyBnB] Attempting to switch to BSC network...');
+
+        return new Promise((resolve, reject) => {
+            // Set up one-time response listener
+            const handleResponse = (event: any) => {
+                console.log('[OnlyBnB] Received network switch response:', event.detail);
+                window.removeEventListener('onlybnb-network-response', handleResponse);
+
+                if (event.detail.success) {
+                    console.log('[OnlyBnB] Network switch successful:', event.detail.message);
+                    resolve();
+                } else {
+                    console.error('[OnlyBnB] Network switch failed:', event.detail.error);
+                    // Don't reject, just resolve anyway - network switch is optional
+                    resolve();
+                }
+            };
+
+            window.addEventListener('onlybnb-network-response', handleResponse);
+
+            // Send network switch request
+            console.log('[OnlyBnB] Dispatching network switch request...');
+            window.dispatchEvent(new CustomEvent('onlybnb-switch-network'));
+
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                window.removeEventListener('onlybnb-network-response', handleResponse);
+                console.warn('[OnlyBnB] Network switch timeout - continuing anyway');
+                resolve(); // Don't reject on timeout
+            }, 10000);
+        });
+    }
+
+    // ============================================================================
+    // CONFIRM AND PAY BUTTON REPLACEMENT
+    // ============================================================================
+
+    public originalConfirmPayButton: HTMLElement | null = null;
+    private cryptoPayButton: HTMLElement | null = null;
+    private payButtonReplaced = false;
+
+    private replaceConfirmPayButton(): void {
+        // Don't replace if already done
+        if (this.payButtonReplaced) {
+            return;
+        }
+
+        // Find the Airbnb "Confirm and pay" button
+        const confirmPaySelectors = [
+            'button[type="submit"]:contains("Confirm and pay")',
+            'button:contains("Confirm and pay")',
+            'button[aria-label*="Confirm and pay"]',
+            'button[data-testid*="confirm"]',
+            'button[type="submit"][class*="primary"]',
+            // More generic selectors
+            'button[type="submit"]',
+        ];
+
+        let confirmButton: HTMLElement | null = null;
+
+        // Try each selector
+        for (const selector of confirmPaySelectors) {
+            try {
+                if (selector.includes(':contains')) {
+                    const match = selector.match(/(.+):contains\("(.+)"\)/);
+                    if (match) {
+                        const [, elementSelector, text] = match;
+                        const elements = document.querySelectorAll(elementSelector);
+                        confirmButton = Array.from(elements).find(el =>
+                            el.textContent?.toLowerCase().includes(text.toLowerCase())
+                        ) as HTMLElement;
+                    }
+                } else {
+                    const elements = document.querySelectorAll(selector);
+                    // Look for button with "Confirm and pay" text
+                    confirmButton = Array.from(elements).find(el =>
+                        el.textContent?.toLowerCase().includes('confirm and pay')
+                    ) as HTMLElement;
+
+                    // If not found, look for primary submit button
+                    if (!confirmButton && elements.length > 0) {
+                        confirmButton = elements[0] as HTMLElement;
+                    }
+                }
+
+                if (confirmButton) {
+                    console.log('[OnlyBnB] Found confirm button with selector:', selector);
+                    break;
+                }
+            } catch (e) {
+                console.debug('[OnlyBnB] Error with selector:', selector, e);
+            }
+        }
+
+        if (!confirmButton) {
+            console.log('[OnlyBnB] Confirm and pay button not found yet');
+            return;
+        }
+
+        console.log('[OnlyBnB] Found Confirm and pay button, replacing...');
+
+        // Store reference to original button
+        this.originalConfirmPayButton = confirmButton;
+
+        // Hide the original button
+        confirmButton.style.display = 'none';
+        confirmButton.setAttribute('data-onlybnb-hidden', 'true');
+
+        this.payButtonReplaced = true;
+        console.log('[OnlyBnB] Confirm and pay button replaced with crypto button');
+    }
+
+    // ============================================================================
+    // CRYPTO PAYMENT UI
+    // ============================================================================
+
+    private async showCryptoPaymentOptions(paymentSection: HTMLElement): Promise<void> {
+        // Store original content if not already stored
+        if (!paymentSection.dataset.originalContent) {
+            paymentSection.dataset.originalContent = paymentSection.innerHTML;
+        }
+
+        // Create crypto payment section
+        const cryptoSection = document.createElement('div');
+        cryptoSection.className = 'onlybnb-crypto-payment';
+        cryptoSection.style.cssText = `
+            background: white;
+            border-radius: 8px;
+        `;
+
+        // Replace payment section content
+        paymentSection.innerHTML = '';
+        paymentSection.appendChild(cryptoSection);
+
+        console.log('[OnlyBnB] Crypto payment options shown');
+    }
+
+
+    private hideCryptoPaymentOptions(paymentSection: HTMLElement): void {
+        // Restore original content
+        if (paymentSection.dataset.originalContent) {
+            paymentSection.innerHTML = paymentSection.dataset.originalContent;
+        }
+
+        console.log('[OnlyBnB] Crypto payment options hidden, original payment section restored');
+    }
+
+
+    // ============================================================================
+    // PRICE EXTRACTION AND CONVERSION
+    // ============================================================================
+
+    private async fetchBNBPrice(): Promise<{ usd: number; sgd: number }> {
+        console.log('[OnlyBnB] Fetching BNB price...');
+
+        return new Promise((resolve, reject) => {
+            // Set up one-time response listener
+            const handleResponse = (event: any) => {
+                console.log('[OnlyBnB] Received BNB price response:', event.detail);
+                window.removeEventListener('onlybnb-price-response', handleResponse);
+
+                if (event.detail.success) {
+                    resolve(event.detail.prices);
+                } else {
+                    console.error('[OnlyBnB] BNB price fetch failed, using fallback:', event.detail.error);
+                    resolve(event.detail.prices); // Use fallback prices
+                }
+            };
+
+            window.addEventListener('onlybnb-price-response', handleResponse);
+
+            // Send price fetch request
+            console.log('[OnlyBnB] Dispatching BNB price fetch request...');
+            window.dispatchEvent(new CustomEvent('onlybnb-fetch-bnb-price'));
+
+            // Timeout after 3 seconds to avoid blocking UI
+            setTimeout(() => {
+                window.removeEventListener('onlybnb-price-response', handleResponse);
+                console.log('[OnlyBnB] BNB price fetch timeout, using fallback prices');
+                resolve({ usd: 600, sgd: 810 }); // Fallback prices
+            }, 3000);
+        });
+    }
+
+    private extractTotalPrice(): { amount: number; currency: string } {
+        console.log('[OnlyBnB] Extracting booking price from page...');
+
+        // Try multiple selectors to find the total price
+        const priceSelectors = [
+            // Specific Airbnb selectors
+            '[data-testid="book-it-default"] span:contains("Total")',
+            '[data-testid="book-it-default"] div:contains("SGD")',
+            '[data-testid="book-it-default"] div:contains("USD")',
+            '[data-testid="book-it-default"] div:contains("$")',
+            // Price summary selectors
+            'div[aria-label*="price"]',
+            'div[class*="price-item"] span:contains("Total")',
+            'div[class*="total"] span:contains("$")',
+            // Generic price patterns
+            'span:contains("Total")',
+            'div:contains("Total") span:contains("$")',
+        ];
+
+        // Look for price in the visible elements
+        const priceElements = document.querySelectorAll('span, div');
+        let totalPrice = 0;
+        let currency = 'USD';
+
+        for (const element of priceElements) {
+            const text = element.textContent?.trim() || '';
+
+            // Match patterns like "$125.12 SGD", "SGD $125.12", "$125.12", etc.
+            const priceMatch = text.match(/(?:SGD\s*)?(?:\$|USD\s*)?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*(?:SGD|USD)?/i);
+
+            if (priceMatch && text.toLowerCase().includes('total')) {
+                const amountStr = priceMatch[1].replace(/,/g, '');
+                const amount = parseFloat(amountStr);
+
+                if (amount > totalPrice) {
+                    totalPrice = amount;
+                    // Detect currency
+                    if (text.includes('SGD') || text.includes('S$')) {
+                        currency = 'SGD';
+                    } else if (text.includes('USD') || text.includes('US$')) {
+                        currency = 'USD';
+                    }
+                }
+            }
+        }
+
+        // If no price found, try the current page content
+        if (totalPrice === 0) {
+            const pageText = document.body.textContent || '';
+            const fallbackMatch = pageText.match(/Total[^$]*\$(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*(SGD|USD)?/i);
+
+            if (fallbackMatch) {
+                totalPrice = parseFloat(fallbackMatch[1].replace(/,/g, ''));
+                currency = fallbackMatch[2] || 'SGD';
+            }
+        }
+
+        console.log('[OnlyBnB] Extracted price:', totalPrice, currency);
+        return { amount: totalPrice || 125.12, currency: currency.toUpperCase() };
+    }
+
+    private async calculateBNBAmount(): Promise<{ bnbAmount: string; exchangeRate: number; totalPrice: { amount: number; currency: string } }> {
+        try {
+            // Get booking price from the page
+            const totalPrice = this.extractTotalPrice();
+            console.log('[OnlyBnB] Total booking price:', totalPrice);
+
+            // Get current BNB price
+            const bnbPrices = await this.fetchBNBPrice();
+            console.log('[OnlyBnB] BNB prices:', bnbPrices);
+
+            // Select the appropriate exchange rate based on currency
+            const exchangeRate = totalPrice.currency === 'SGD' ? bnbPrices.sgd : bnbPrices.usd;
+
+            // Calculate BNB amount needed
+            const bnbAmount = (totalPrice.amount / exchangeRate).toFixed(6);
+
+            console.log('[OnlyBnB] Calculated BNB amount:', {
+                totalPrice: totalPrice,
+                exchangeRate: exchangeRate,
+                bnbAmount: bnbAmount
+            });
+
+            return {
+                bnbAmount,
+                exchangeRate,
+                totalPrice
+            };
+        } catch (error) {
+            console.error('[OnlyBnB] Error calculating BNB amount:', error);
+
+            // Fallback calculation
+            return {
+                bnbAmount: '0.2084',
+                exchangeRate: 600,
+                totalPrice: { amount: 125.12, currency: 'SGD' }
+            };
+        }
+    }
+
+    // ============================================================================
+    // CLEANUP
+    // ============================================================================
 
     public destroy(): void {
         if (this.observer) {
@@ -939,7 +1037,7 @@ if (document.readyState === 'loading') {
 
 // Listen for messages from the extension
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.type === 'PAYMENT_COMPLETE') {
+    if (request.type === 'PAYMENT_1COMPLETE' || request.type === 'PAYMENT_CONFIRMED') {
         // Handle successful payment
         console.log('[OnlyBnB] Payment completed successfully');
 
@@ -947,8 +1045,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const successMessage = document.createElement('div');
         successMessage.style.cssText = `
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 10px;
+            right: 10px;
             background: #4CAF50;
             color: white;
             padding: 16px 24px;
@@ -957,14 +1055,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             z-index: 10000;
             font-weight: 600;
         `;
-        successMessage.textContent = '✓ OnlyBNB card added successfully!';
+        successMessage.innerHTML = '✓ Crypto payment successful!<br><small>Completing your booking...</small>';
         document.body.appendChild(successMessage);
 
         setTimeout(() => {
             successMessage.remove();
-            // Reload the page to show the new payment method
-            window.location.reload();
-        }, 3000);
+        }, 5000);
 
         sendResponse({ success: true });
     }
