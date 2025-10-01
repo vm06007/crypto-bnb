@@ -1,22 +1,6 @@
 // Background service worker for OnlyBnB
 
-interface PaymentRequest {
-    amount: string;
-    currency: string;
-    url: string;
-    timestamp: number;
-    bookingId?: string;
-}
-
-interface VirtualCard {
-    id: string;
-    last4: string;
-    brand: string;
-    expiryMonth: string;
-    expiryYear: string;
-    cardNumber?: string;
-    cvv?: string;
-}
+import { PaymentRequest, VirtualCard } from '../../shared/types';
 
 class OnlyBnBBackground {
     private currentPayment: PaymentRequest | null = null;
