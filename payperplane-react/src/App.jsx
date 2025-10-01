@@ -48,10 +48,39 @@ function App() {
 
       // Load the JavaScript after components are loaded
       setTimeout(() => {
-        const script = document.createElement('script')
-        script.src = '/example.js'
-        document.body.appendChild(script)
-      }, 100)
+        // Load example.js
+        const script1 = document.createElement('script')
+        script1.src = '/example.js'
+        document.body.appendChild(script1)
+        
+        // Load modal handler
+        const script2 = document.createElement('script')
+        script2.src = '/modal-handler-v2.js'
+        script2.onload = () => {
+          console.log('Modal handler v2 loaded')
+          // Manually initialize modals after a short delay
+          setTimeout(() => {
+            if (window.initializeModals) {
+              window.initializeModals()
+            }
+          }, 100)
+        }
+        document.body.appendChild(script2)
+        
+        // Load solution modals handler
+        const script3 = document.createElement('script')
+        script3.src = '/solution-modals.js'
+        script3.onload = () => {
+          console.log('Solution modals loaded')
+          // Initialize solution modals if needed
+          setTimeout(() => {
+            if (window.initializeSolutionModals) {
+              window.initializeSolutionModals()
+            }
+          }, 200)
+        }
+        document.body.appendChild(script3)
+      }, 500)
     }
 
     loadComponents()
@@ -65,6 +94,9 @@ function App() {
         <div className="js-transform-container" style={{ transform: 'translateY(0px)' }}>
           <div dangerouslySetInnerHTML={{ __html: components.hero }} />
           <div dangerouslySetInnerHTML={{ __html: components.awards }} />
+          <div dangerouslySetInnerHTML={{ __html: components.bestSuited }} />
+          <div dangerouslySetInnerHTML={{ __html: components.solutions }} />
+          <div dangerouslySetInnerHTML={{ __html: components.stats }} />
         </div>
       </main>
       <div dangerouslySetInnerHTML={{ __html: components.footer }} />
