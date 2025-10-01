@@ -847,18 +847,20 @@ class PayperPlaneInjector {
                 backdrop-filter: blur(12px);
                 -webkit-backdrop-filter: blur(12px);
                 border: 1px solid rgba(33, 150, 243, 0.3);
-                color: #fff;
+                color: #333;
                 padding: 20px 28px;
                 border-radius: 20px;
                 box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
                 z-index: 10000;
                 font-weight: 600;
                 animation: slideIn 0.3s ease-out;
+                width: 300px;
+                max-width: 300px;
             `;
             processingMessage.innerHTML = `
                 \u23F3 Transaction submitted!<br>
                 <small>Hash: ${txHash.substring(0, 10)}...${txHash.substring(58)}</small><br>
-                <a href="https://bscscan.com/tx/${txHash}" target="_blank" style="color: #fff; text-decoration: underline;">View on BSCScan</a>
+                <a href="https://bscscan.com/tx/${txHash}" target="_blank" style="color: #333; text-decoration: underline;">View on BSCScan</a>
             `;
             document.body.appendChild(processingMessage);
             setTimeout(() => {
@@ -877,13 +879,15 @@ class PayperPlaneInjector {
                         backdrop-filter: blur(12px);
                         -webkit-backdrop-filter: blur(12px);
                         border: 1px solid rgba(76, 175, 80, 0.3);
-                        color: #fff;
+                        color: #333;
                         padding: 20px 28px;
                         border-radius: 20px;
                         box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
                         z-index: 10000;
                         font-weight: 600;
                         animation: slideIn 0.3s ease-out;
+                        width: 300px;
+                        max-width: 300px;
                     `;
                     successMessage.innerHTML = "<span style='font-size: 20px;'>✓</span> Crypto payment successful!<br><small style='opacity: 0.9;'>Completing your booking...</small>";
                     document.body.appendChild(successMessage);
@@ -1621,12 +1625,13 @@ class PayperPlaneInjector {
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(76, 175, 80, 0.3);
-            color: #fff;
+            color: #333;
             padding: 20px 28px;
             border-radius: 20px;
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
             z-index: 10000;
             font-weight: 600;
+            width: 300px;
             max-width: 300px;
             animation: slideIn 0.3s ease-out;
         `;
@@ -1675,13 +1680,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(76, 175, 80, 0.3);
-            color: #fff;
+            color: #333;
             padding: 20px 28px;
             border-radius: 20px;
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
             z-index: 10000;
             font-weight: 600;
             animation: slideIn 0.3s ease-out;
+            width: 300px;
+            max-width: 300px;
         `;
         successMessage.innerHTML = "<span style='font-size: 20px;'>✓</span> Crypto payment successful!<br><small style='opacity: 0.9;'>Completing your booking...</small>";
         document.body.appendChild(successMessage);

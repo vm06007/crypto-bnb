@@ -350,6 +350,15 @@
                                             font-size: 36px;
                                             margin-bottom: 0px;
                                             animation: iconBounce 1s ease infinite;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                        }
+                                        
+                                        .step-icon img {
+                                            width: 36px;
+                                            height: 36px;
+                                            object-fit: contain;
                                         }
 
                                         @keyframes iconBounce {
@@ -500,7 +509,9 @@
                                 </div>
                                 <div class="crypto-payment-flow" id="cryptoFlowMobile">
                                     <div class="wallet-connect-step" id="step1Mobile">
-                                        <div class="step-icon">🦊</div>
+                                        <div class="step-icon">
+                                            <img src="files/metamask-fox.svg" alt="MetaMask">
+                                        </div>
                                         <h4>Connect your wallet</h4>
                                         <button class="connect-wallet-btn">Connect MetaMask</button>
                                         <button class="connect-wallet-btn secondary">WalletConnect</button>
