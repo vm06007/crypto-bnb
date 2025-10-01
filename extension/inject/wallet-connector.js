@@ -1,11 +1,8 @@
 // This script runs in the main page context and has access to window.ethereum
 (function() {
-    console.log('[OnlyBnB Injected] Wallet connector script loaded');
-    console.log('[OnlyBnB Injected] window.ethereum available:', !!window.ethereum);
 
     // Listen for connection requests from the content script
     window.addEventListener('onlybnb-connect-wallet', async (event) => {
-        console.log('[OnlyBnB Injected] Received wallet connection request');
 
         const responseEvent = (data) => {
             window.dispatchEvent(new CustomEvent('onlybnb-wallet-response', { detail: data }));
@@ -14,7 +11,6 @@
         try {
             // Check if MetaMask is available
             if (!window.ethereum) {
-                console.log('[OnlyBnB Injected] No ethereum provider found');
                 responseEvent({
                     success: false,
                     error: 'MetaMask is not installed. Please install MetaMask and refresh the page.'
@@ -22,17 +18,12 @@
                 return;
             }
 
-            console.log('[OnlyBnB Injected] Found ethereum provider:', window.ethereum);
-            console.log('[OnlyBnB Injected] Is MetaMask:', window.ethereum.isMetaMask);
-
             // Request account access
-            console.log('[OnlyBnB Injected] Requesting accounts...');
             const accounts = await window.ethereum.request({
                 method: 'eth_requestAccounts',
                 params: []
             });
 
-            console.log('[OnlyBnB Injected] Accounts received:', accounts);
 
             if (!accounts || accounts.length === 0) {
                 throw new Error('No accounts returned from MetaMask');
@@ -51,7 +42,6 @@
                 method: 'eth_chainId'
             });
 
-            console.log('[OnlyBnB Injected] Connection successful!');
             responseEvent({
                 success: true,
                 account: account,
@@ -63,7 +53,6 @@
             window.__onlybnb_account = account;
 
         } catch (error) {
-            console.error('[OnlyBnB Injected] Wallet connection failed:', error);
             responseEvent({
                 success: false,
                 error: error.message || 'Failed to connect wallet',
@@ -74,7 +63,6 @@
 
     // Listen for BSC network switch requests
     window.addEventListener('onlybnb-switch-network', async (event) => {
-        console.log('[OnlyBnB Injected] Received network switch request');
 
         const responseEvent = (data) => {
             window.dispatchEvent(new CustomEvent('onlybnb-network-response', { detail: data }));
@@ -121,7 +109,6 @@
                 }
             }
         } catch (error) {
-            console.error('[OnlyBnB Injected] Network switch failed:', error);
             responseEvent({
                 success: false,
                 error: error.message || 'Failed to switch network'
@@ -131,7 +118,6 @@
 
     // Listen for balance fetch requests
     window.addEventListener('onlybnb-fetch-balances', async (event) => {
-        console.log('[OnlyBnB Injected] Received balance fetch request');
 
         const responseEvent = (data) => {
             window.dispatchEvent(new CustomEvent('onlybnb-balances-response', { detail: data }));
@@ -168,7 +154,6 @@
             // In a real implementation, you'd call the balanceOf method on each token contract
             // For now, returning the native BNB balance and zeros for tokens
 
-            console.log('[OnlyBnB Injected] Balances fetched:', tokenBalances);
             responseEvent({
                 success: true,
                 balances: tokenBalances,
@@ -176,7 +161,6 @@
             });
 
         } catch (error) {
-            console.error('[OnlyBnB Injected] Balance fetch failed:', error);
             responseEvent({
                 success: false,
                 error: error.message || 'Failed to fetch balances'
@@ -186,7 +170,6 @@
 
     // Listen for BNB price fetch requests
     window.addEventListener('onlybnb-fetch-bnb-price', async (event) => {
-        console.log('[OnlyBnB Injected] Fetching BNB price from Chainlink...');
 
         const responseEvent = (data) => {
             window.dispatchEvent(new CustomEvent('onlybnb-price-response', { detail: data }));
@@ -200,7 +183,6 @@
             // Encode the function call for latestAnswer()
             const functionSignature = '0x50d25bcd'; // latestAnswer() function selector
 
-            console.log('[OnlyBnB Injected] Calling Chainlink contracts for prices...');
 
             // Call both contracts in parallel
             const [bnbUsdResult, usdSgdResult] = await Promise.all([
@@ -220,7 +202,6 @@
                 })
             ]);
 
-            console.log('[OnlyBnB Injected] Chainlink results:', { bnbUsdResult, usdSgdResult });
 
             // Parse the results (Chainlink returns prices with 8 decimals)
             const bnbUsdPriceInt = parseInt(bnbUsdResult, 16);
@@ -235,12 +216,6 @@
             // Calculate BNB price in SGD using proper conversion
             const bnbPriceSGD = bnbPriceUSD * usdToSgdRate;
 
-            console.log('[OnlyBnB Injected] Calculated prices:', {
-                bnbPriceUSD: bnbPriceUSD,
-                sgdToUsdRate: sgdToUsdRate,
-                usdToSgdRate: usdToSgdRate,
-                bnbPriceSGD: bnbPriceSGD
-            });
 
             responseEvent({
                 success: true,
@@ -257,7 +232,6 @@
             });
 
         } catch (error) {
-            console.error('[OnlyBnB Injected] Failed to fetch from Chainlink:', error);
 
             // Fallback to reasonable current prices
             responseEvent({
@@ -274,7 +248,6 @@
 
     // Listen for transaction send requests
     window.addEventListener('onlybnb-send-transaction', async (event) => {
-        console.log('[OnlyBnB Injected] Received transaction request', event.detail);
 
         const responseEvent = (data) => {
             window.dispatchEvent(new CustomEvent('onlybnb-transaction-response', { detail: data }));
@@ -292,7 +265,6 @@
             const { from, to, value, gas } = event.detail;
 
             // Send transaction
-            console.log('[OnlyBnB Injected] Sending transaction...');
             const txHash = await window.ethereum.request({
                 method: 'eth_sendTransaction',
                 params: [{
@@ -303,14 +275,12 @@
                 }],
             });
 
-            console.log('[OnlyBnB Injected] Transaction sent successfully:', txHash);
             responseEvent({
                 success: true,
                 txHash: txHash
             });
 
         } catch (error) {
-            console.error('[OnlyBnB Injected] Transaction failed:', error);
             responseEvent({
                 success: false,
                 error: error.message || 'Transaction failed',
@@ -318,6 +288,4 @@
             });
         }
     });
-
-    console.log('[OnlyBnB Injected] Wallet connector ready');
 })();
