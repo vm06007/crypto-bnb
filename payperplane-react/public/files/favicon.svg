@@ -1,0 +1,23 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Light green background -->
+  <rect width="32" height="32" fill="#98FB98"/>
+  
+  <!-- Main triangle at top -->
+  <path d="M16 4 L26 16 L6 16 Z" fill="#000000"/>
+  
+  <!-- Central vertical elements (split trunk) -->
+  <rect x="15" y="16" width="2" height="8" fill="#000000"/>
+  <rect x="15" y="24" width="2" height="4" fill="#000000"/>
+  
+  <!-- Left side diagonal elements -->
+  <path d="M8 18 L12 22 L6 22 Z" fill="#000000"/>
+  <path d="M6 20 L10 24 L2 24 Z" fill="#000000"/>
+  
+  <!-- Right side diagonal elements -->
+  <path d="M24 18 L28 22 L20 22 Z" fill="#000000"/>
+  <path d="M22 20 L26 24 L18 24 Z" fill="#000000"/>
+  
+  <!-- Bottom diamond elements -->
+  <path d="M14 26 L16 28 L12 28 Z" fill="#000000"/>
+  <path d="M16 28 L18 30 L14 30 Z" fill="#000000"/>
+</svg>
