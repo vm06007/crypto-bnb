@@ -685,6 +685,31 @@
     height: 40px;
 }
 
+/* Mobile header layout - remove gap between logo and button */
+@media screen and (max-width: 991px) {
+    .header__box {
+        justify-content: space-between !important;
+        padding-left: 0px !important;
+    }
+
+    .header__center {
+        display: none !important;
+    }
+
+    .header__right {
+        margin-left: 0 !important;
+    }
+
+    .menu__buttons {
+        margin-left: 0 !important;
+    }
+
+    /* Hide Github button in footer on mobile */
+    .footer__buttons {
+        display: none !important;
+    }
+}
+
 @media screen and (min-width: 992px) {
     /* Hide video on desktop */
     .main-new-solutions__video-mobile {
