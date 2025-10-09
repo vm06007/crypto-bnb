@@ -427,12 +427,10 @@
 }
 .main-new-awards__image_forbes {
     width: 252px;
-    height: 90px;
     transition: transform 0.3s ease;
 }
 .main-new-awards__image_sigma {
     width: 138px;
-    height: 162px;
     transition: transform 0.3s ease;
 }
 .main-new-awards__card:hover .main-new-awards__image_forbes,
@@ -655,6 +653,57 @@
 }
 .main-new-solutions__bubbles {
     min-height: 460px;
+}
+
+/* Mobile video player - show on mobile, hide on desktop */
+.main-new-solutions__video-mobile {
+    display: block;
+    margin: 20px 0;
+}
+
+/* Hide bubbles on mobile, show on desktop */
+.main-new-solutions__bubbles {
+    display: none;
+}
+
+/* Header button visibility - Mobile first */
+.header__button-mobile {
+    display: inline-flex;
+}
+
+.header__button-desktop {
+    display: none;
+}
+
+/* Ensure proper button styling and alignment */
+.header__button-mobile,
+.header__button-desktop {
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    min-width: 114px;
+    height: 40px;
+}
+
+@media screen and (min-width: 992px) {
+    /* Hide video on desktop */
+    .main-new-solutions__video-mobile {
+        display: none;
+    }
+
+    /* Show bubbles on desktop */
+    .main-new-solutions__bubbles {
+        display: block;
+    }
+
+    /* Show Github button on desktop, hide Demo button */
+    .header__button-desktop {
+        display: inline-flex;
+    }
+
+    .header__button-mobile {
+        display: none;
+    }
 }
 @media screen and (min-width: 992px) {
     .main-new-solutions {
@@ -5044,17 +5093,17 @@ div.main-new__tooltip {
         text-align: center;
         gap: 20px;
     }
-    
+
     .footer__logo {
         margin-right: 0;
     }
-    
+
     .footer__menu {
         flex-wrap: wrap;
         justify-content: center;
         gap: 10px;
     }
-    
+
     .footer__menu-link {
         font-size: 14px;
         padding: 6px 12px;
@@ -5065,7 +5114,7 @@ div.main-new__tooltip {
     .footer__menu {
         width: 100%;
     }
-    
+
     .footer__menu-link {
         flex: 1 0 calc(50% - 5px);
         text-align: center;
